@@ -1,0 +1,6 @@
+{
+	"name": "Weaver",
+	"tree": {
+		"$path": "src"
+	}
+}
