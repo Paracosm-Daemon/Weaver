@@ -169,7 +169,6 @@ function SignalConnection.new(Callback: ConnectionCallback): SignalConnection
 end
 --[=[
 	Disconnects the connection, removing it from the signal.
-	@within SignalConnection
 ]=]--
 function SignalConnection:Disconnect(): ()
 	self.Connected = false
