@@ -11,7 +11,7 @@ local Signal: SignalImpl = {} :: SignalImpl
 --[=[
 	@class SignalConnection
 
-	The connection class used by Signals.
+	The connection class used by [Signal] objects.
 ]=]--
 local Connection: SignalConnectionImpl = {} :: SignalConnectionImpl
 
@@ -38,6 +38,10 @@ type SignalImpl =
 		Connects `Callback` to this signal, creating a new `Connection`.
 	]=]--
 	Connect: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
+	--[=[
+		Connects `Callback` to this signal in parallel, creating a new `Connection`. Useful for Parallel Luau.
+	]=]--
+	ConnectParallel: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
 		Connects `Callback` to this signal, disconnecting it once the signal has fired once.
 	]=]--
@@ -80,6 +84,11 @@ export type SignalConnection = typeof(setmetatable({} :: {
 }, {} :: SignalConnectionImpl))
 -- Functions
 -- Signal
+--[=[
+	Constructs a new Signal object.
+
+	@return Signal
+]=]--
 function Signal.new(): Signal
 	return setmetatable({
 		_Connections = {};
@@ -108,6 +117,18 @@ function Signal:Connect(Callback: ConnectionCallback): SignalConnection
 	end
 	self._Connections[Connected] = true
 	return Connected
+end
+--[=[
+	Connects `Callback` to this signal in parallel, creating a new `Connection`. Useful for Parallel Luau.
+
+	@param Callback ConnectionCallback -- The function to connect.
+	@return Connection
+]=]--
+function Signal:ConnectParallel(Callback: ConnectionCallback): SignalConnection
+	return self:Connect(function(...): ()
+		task.desynchronize()
+		Callback(...)
+	end)
 end
 --[=[
 	Connects `Callback` to this signal, disconnecting it once the signal has fired once.
