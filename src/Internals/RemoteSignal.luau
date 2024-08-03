@@ -98,23 +98,25 @@ function RemoteSignal.new(From: SignalListener): RemoteSignal
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
 	}, RemoteSignal)
 end
---[=[
-	On the client, fires to the server.
+if IS_SERVER then
+	--[=[
+		Fires to the specified client, from the server. **The first argument of `Fire` must be a Player.**
 
-	On the server, fires to the specified client. **The first argument of `Fire` must be a Player in this case.**
-
-	@param ... ...any -- The arguments to send over this RemoteSignal.
-]=]--
-function RemoteSignal:Fire(...): ()
-	if IS_SERVER then
-		local Client: any = (...)
-
+		@param ... ...any -- The arguments to send over this RemoteSignal.
+	]=]--
+	function RemoteSignal:Fire(Client: Player, ...): ()
 		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
-		self._Instance:FireClient(...)
-
-		return
+		self._Instance:FireClient(Client, ...)
 	end
-	self._Instance:FireServer(...)
+else
+	--[=[
+		Fires to the server, from the client.
+
+		@param ... ...any -- The arguments to send over this RemoteSignal.
+	]=]--
+	function RemoteSignal:Fire(...): ()
+		self._Instance:FireServer(...)
+	end
 end
 --[=[
 	Fires to all clients in the game. **This function only works on the server.**
