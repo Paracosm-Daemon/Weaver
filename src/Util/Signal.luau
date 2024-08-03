@@ -5,7 +5,7 @@
 
 	Weaver's built-in implementation for signals.
 
-	This is meant to replace BindableEvents, with simple logic that ties in nicely with Weaver, omitting the need of Instances.
+	This is meant to replace BindableEvents with simple and fast logic, omitting the need of Instances.
 ]=]--
 local Signal: SignalImpl = {} :: SignalImpl
 --[=[
