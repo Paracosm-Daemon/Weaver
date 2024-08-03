@@ -2,7 +2,7 @@
 return
 {
 	EXCEPTION_BEFORE_START = "Controllers cannot be added after Weaver has started";
-	EXCEPTION_MUST_BE_TYPE = "%s must be a %s, got %s";
+	EXCEPTION_MUST_BE_TYPE = "%s must be of type %s, got %s";
 
 	EXCEPTION_DOES_NOT_EXIST = "%s %s does not exist";
 	EXCEPTION_EXISTS_AS = "%s %s already exists";
