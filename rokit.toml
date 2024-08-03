@@ -4,5 +4,6 @@
 # New tools can be added by running `rokit add <tool>` in a terminal.
 
 [tools]
+selene = "kampfkarren/selene@0.27.1"
 lune = "lune-org/lune@0.8.6"
 rojo = "rojo-rbx/rojo@7.4.2"
