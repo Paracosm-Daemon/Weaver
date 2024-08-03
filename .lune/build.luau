@@ -1,7 +1,6 @@
 -- Modules
 local Process = require("@lune/process")
 local Filesystem = require("@lune/fs")
-local Roblox = require("@lune/roblox")
 local Net = require("@lune/net")
 -- Constants
 local APPLICATION_JSON: string = "application/json"
@@ -9,12 +8,7 @@ local USER_AGENT: string = "Roblox/WinInet"
 
 local PUBLISH_TO: string = "18772004646"
 -- Variables
-local File = Filesystem.readFile("Weaver.rbxl")
-local game = Roblox.deserializePlace(File)
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Asset: string = Roblox.serializeModel({ ReplicatedStorage.Weaver }, false)
+local Asset: string = Filesystem.readFile("Weaver.rbxm")
 local Cookie: string = assert(Process.env.LUNE_AUTH, "Need LUNE_AUTH env to publish Weaver")
 
 local CSRF_Headers: { [string]: any } =

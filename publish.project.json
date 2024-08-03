@@ -1,9 +1,0 @@
-{
-	"name": "ReplicatedStorage",
-	"tree": {
-		"$className": "ReplicatedStorage",
-		"Weaver": {
-			"$path": "src"
-		}
-	}
-}

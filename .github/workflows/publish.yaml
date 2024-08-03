@@ -28,7 +28,7 @@ jobs:
           cd ..
       - name: Build Place
         shell: bash
-        run: rojo build publish.project.json -o Weaver.rbxl
+        run: rojo build main.project.json -o Weaver.rbxm
       - name: Publish Module to Marketplace
         shell: bash
         env:
