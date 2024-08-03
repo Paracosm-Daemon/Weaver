@@ -17,9 +17,9 @@ local Controllers: { [string]: WeaverController } = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
+local Waiting: number = 0
 
 local Communication: Folder
-local Waiting: number = 0
 
 local Running: boolean = false
 local Started: boolean = false
