@@ -1,7 +1,7 @@
 [package]
 name = "paracosm-daemon/weaver"
 description = "Weaver is a replacement to the lightweight game framework Knit"
-version = "0.0.1"
+version = "1.0.0"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
