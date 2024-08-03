@@ -1,0 +1,35 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Publish Weaver
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+      - name: Install Rokit
+        uses: kalrnlo/setup-rokit@v1.0.0
+      - name: Build Place
+        run: rojo build publish.project.json -o Weaver.rbxl
+      - name: Publish Module to Marketplace
+        shell: bash
+        run: |
+          cd .lune
+          lune run build.luau
+      - name: Get Version
+        id: get_version
+        # run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Package Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body_path: log.md
+          fail_on_unmatched_files: true
+          files: |
+            Weaver.rbxm
