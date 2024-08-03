@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.7
       - name: Install Rokit
-        uses: kalrnlo/setup-rokit@v1.0.0
+        uses: paracosm-daemon/setup-rokit-rblx@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Place
