@@ -31,15 +31,15 @@ type RemoteSignalImpl =
 	]=]--
 	Fire: (self: RemoteSignal, ...any) -> ();
 	--[=[
-		Fires to all clients in the game. This function only works on the server.
+		Fires to all clients in the game.
 	]=]--
 	FireAll: (self: RemoteSignal, Client: Player, ...any) -> ();
 	--[=[
-		Fires to all clients specified in `For`. This function only works on the server.
+		Fires to all clients specified in `For`.
 	]=]--
 	FireFor: (self: RemoteSignal, For: { Player }, ...any) -> ();
 	--[=[
-		Fires to all clients in the game, except for the clients specified. This function only works on the server.
+		Fires to all clients in the game, except for the clients specified.
 	]=]--
 	FireExcept: (self: RemoteSignal, Excluding: { Player }, ...any) -> ();
 	--[=[
@@ -93,7 +93,7 @@ local Hash: { [Player]: number } = {}
 local Connected: number = 0
 -- Functions
 function RemoteSignal.new(From: SignalListener): RemoteSignal
-	return setmetatable({
+	return setmetatable(table.freeze{
 		_Instance = From;
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
 	}, RemoteSignal)
@@ -102,57 +102,62 @@ if IS_SERVER then
 	--[=[
 		Fires to the specified client, from the server. **The first argument of `Fire` must be a Player.**
 
+		@server
 		@param ... ...any -- The arguments to send over this RemoteSignal.
 	]=]--
 	function RemoteSignal:Fire(Client: Player, ...): ()
 		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
 		self._Instance:FireClient(Client, ...)
 	end
+	--[=[
+		Fires to all clients in the game.
+
+		@server
+		@param ... ...any
+	]=]--
+	function RemoteSignal:FireAll(...): ()
+		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
+		self._Instance:FireAllClients(...)
+	end
+	--[=[
+		Fires to all clients specified in `For`.
+
+		@server
+		@param For { Player }
+		@param ... ...any
+	]=]--
+	function RemoteSignal:FireFor(For: { Player }, ...): ()
+		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
+		for _, Client: Player in For do
+			self._Instance:FireClient(Client, ...)
+		end
+	end
+	--[=[
+		Fires to all clients in the game, except for the clients specified.
+
+		@server
+		@param Excluding { Player }
+		@param ... ...any
+	]=]--
+	function RemoteSignal:FireExcept(Excluding: { Player }, ...): ()
+		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
+
+		local For: { Player } = table.clone(Clients)
+		for _, Client: Player in Excluding do
+			For[Hash[Client]] = nil
+		end
+		self:FireFor(For, ...)
+	end
 else
 	--[=[
 		Fires to the server, from the client.
 
+		@client
 		@param ... ...any -- The arguments to send over this RemoteSignal.
 	]=]--
 	function RemoteSignal:Fire(...): ()
 		self._Instance:FireServer(...)
 	end
-end
---[=[
-	Fires to all clients in the game. **This function only works on the server.**
-
-	@param ... ...any
-]=]--
-function RemoteSignal:FireAll(...): ()
-	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
-	self._Instance:FireAllClients(...)
-end
---[=[
-	Fires to all clients specified in `For`. **This function only works on the server.**
-
-	@param For { Player }
-	@param ... ...any
-]=]--
-function RemoteSignal:FireFor(For: { Player }, ...): ()
-	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
-	for _, Client: Player in For do
-		self._Instance:FireClient(Client, ...)
-	end
-end
---[=[
-	Fires to all clients in the game, except for the clients specified. **This function only works on the server.**
-
-	@param Excluding { Player }
-	@param ... ...any
-]=]--
-function RemoteSignal:FireExcept(Excluding: { Player }, ...): ()
-	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
-
-	local For: { Player } = table.clone(Clients)
-	for _, Client: Player in Excluding do
-		For[Hash[Client]] = nil
-	end
-	self:FireFor(For, ...)
 end
 --[=[
 	Connects `Callback` to this signal.
@@ -222,4 +227,4 @@ if IS_SERVER then
 		Hash[Client] = Index
 	end
 end
-return RemoteSignal
+return table.freeze(RemoteSignal)
