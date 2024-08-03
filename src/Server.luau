@@ -158,7 +158,7 @@ function Weaver.GetService(Name: string): WeaverService
 end
 
 function Weaver.CreateService(Service: WeaverServiceOmitClient): WeaverService
-	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
+	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Name: string = Service.Name
 	local Type: string = type(Name)
@@ -180,7 +180,7 @@ function Weaver.CreateService(Service: WeaverServiceOmitClient): WeaverService
 	return Cast
 end
 function Weaver.AddServices(Handle: Instance): { WeaverService }
-	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
+	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Type: string = typeof(Handle)
 	assert(Type == "Instance", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))

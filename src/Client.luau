@@ -159,7 +159,7 @@ function Weaver.GetController(Name: string): WeaverController
 end
 
 function Weaver.CreateController(Controller: WeaverController): WeaverController
-	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
+	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Controllers"))
 
 	local Name: string = Controller.Name
 	local Type: string = type(Name)
@@ -171,7 +171,7 @@ function Weaver.CreateController(Controller: WeaverController): WeaverController
 	return Controller
 end
 function Weaver.AddControllers(Handle: Instance): { WeaverController }
-	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
+	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Controllers"))
 
 	local Type: string = typeof(Handle)
 	assert(Type == "Instance", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))
