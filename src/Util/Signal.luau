@@ -13,14 +13,14 @@ local Signal: SignalImpl = {} :: SignalImpl
 
 	The connection class used by [Signal] objects.
 ]=]--
-local Connection: SignalConnectionImpl = {} :: SignalConnectionImpl
+local SignalConnection: SignalConnectionImpl = {} :: SignalConnectionImpl
 
 Signal.__index = Signal
 Signal.__tostring = function(_self: SignalImpl): string
 	return "Signal"
 end
 
-Connection.__index = Connection
+SignalConnection.__index = SignalConnection
 -- Types
 type SignalImpl =
 {
@@ -100,8 +100,8 @@ end
 	@param ... ...any
 ]=]--
 function Signal:Fire(...): ()
-	for Connected: SignalConnection in self._Connections do
-		task.spawn(Connected._Callback, ...)
+	for Connection: SignalConnection in self._Connections do
+		task.spawn(Connection._Callback, ...)
 	end
 end
 --[=[
@@ -111,12 +111,12 @@ end
 	@return SignalConnection
 ]=]--
 function Signal:Connect(Callback: ConnectionCallback): SignalConnection
-	local Connected: SignalConnection = Connection.new(Callback)
-	Connected._Finish = function(): ()
-		self._Connections[Connected] = nil
+	local Connection: SignalConnection = SignalConnection.new(Callback)
+	Connection._Finish = function(): ()
+		self._Connections[Connection] = nil
 	end
-	self._Connections[Connected] = true
-	return Connected
+	self._Connections[Connection] = true
+	return Connection
 end
 --[=[
 	Connects `Callback` to this signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.
@@ -137,12 +137,12 @@ end
 	@return SignalConnection
 ]=]--
 function Signal:Once(Callback: ConnectionCallback): SignalConnection
-	local Connected: SignalConnection
-	Connected = self:Connect(function(...): ()
+	local Connection: SignalConnection
+	Connection = self:Connect(function(...): ()
 		task.spawn(Callback, ...)
-		Connected:Disconnect()
+		Connection:Disconnect()
 	end)
-	return Connected
+	return Connection
 end
 --[=[
 	Waits for the event to fire before resuming the current thread.
@@ -152,26 +152,26 @@ end
 ]=]--
 function Signal:Wait(): (...any)
 	local Thread: thread = coroutine.running()
-	local Connected: SignalConnection
+	local Connection: SignalConnection
 
-	Connected = self:Connect(function(...): ()
+	Connection = self:Connect(function(...): ()
 		task.spawn(Thread, ...)
-		Connected:Disconnect()
+		Connection:Disconnect()
 	end)
 	return coroutine.yield()
 end
 -- Connection
-function Connection.new(Callback: ConnectionCallback): SignalConnection
+function SignalConnection.new(Callback: ConnectionCallback): SignalConnection
 	return setmetatable({
 		Connected = true;
 		_Callback = Callback;
-	}, Connection) :: SignalConnection
+	}, SignalConnection) :: SignalConnection
 end
 --[=[
 	Disconnects the connection, removing it from the signal.
 	@within SignalConnection
 ]=]--
-function Connection:Disconnect(): ()
+function SignalConnection:Disconnect(): ()
 	self.Connected = false
 	self._Finish()
 end
