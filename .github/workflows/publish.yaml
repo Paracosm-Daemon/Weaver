@@ -15,7 +15,7 @@ jobs:
       - name: Install Rokit
         uses: paracosm-daemon/setup-rokit-rblx@v1.0.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
       - name: Build Place
         run: rojo build publish.project.json -o Weaver.rbxl
       - name: Publish Module to Marketplace

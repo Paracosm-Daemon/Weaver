@@ -18,7 +18,7 @@ jobs:
       - name: Install Rokit
         uses: paracosm-daemon/setup-rokit-rblx@v1.0.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
       - name: Lint
         run: |
           selene ./src
