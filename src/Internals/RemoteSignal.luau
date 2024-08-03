@@ -110,7 +110,7 @@ function RemoteSignal:Fire(...): ()
 		local Client: any = (...)
 
 		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
-		self._Instance:FireClient(Client, ...)
+		self._Instance:FireClient(...)
 
 		return
 	end
@@ -134,7 +134,7 @@ end
 function RemoteSignal:FireFor(For: { Player }, ...): ()
 	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 	for _, Client: Player in For do
-		self:Fire(Client, ...)
+		self._Instance:FireClient(Client, ...)
 	end
 end
 --[=[
