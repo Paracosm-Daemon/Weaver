@@ -13,14 +13,12 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Install Rokit
-      uses: kalrnlo/setup-rokit@v1.0.0
-      with:
-        token: ${{ env.GH_TOKEN }}
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Lint
-      run: |
-        selene ./src
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rokit
+        uses: kalrnlo/setup-rokit@v1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint
+        run: |
+          selene ./src
