@@ -4,18 +4,21 @@ local Weaver: WeaverImpl = {} :: WeaverImpl
 -- Services
 local Players = game:GetService("Players")
 -- Modules
-local Util = script.Parent.Util
+local Module = script.Parent
 
-local RemoteSignal = require(Util.RemoteSignal)
-local Exceptions = require(Util.Exceptions)
-local Paths = require(Util.Paths)
+local Internals = Module.Internals
+local Util = Module.Util
+
+local RemoteSignal = require(Internals.RemoteSignal)
+local Exceptions = require(Internals.Exceptions)
+local Paths = require(Internals.Paths)
 -- Variables
 local Controllers: { [string]: WeaverController } = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
 
-local Internal: Folder
+local Communication: Folder
 local Waiting: number = 0
 
 local Running: boolean = false
@@ -25,13 +28,13 @@ local Started: boolean = false
 local function HasController(Name: string): boolean
 	return Controllers[Name] ~= nil
 end
-local function FindInternal(): Folder
-	if Internal then
-		return Internal
+local function FindCommunication(): Folder
+	if Communication then
+		return Communication
 	end
 	for _, Child: Instance in Paths.TREE:GetChildren() do
 		if (Child.Name == Paths.ORIGIN) and Child:IsA("Folder") then
-			Internal = Child
+			Communication = Child
 			return Child
 		end
 	end
@@ -49,13 +52,13 @@ local function FindInternal(): Folder
 	coroutine.yield()
 
 	Connection:Disconnect()
-	Internal = Found
+	Communication = Found
 
 	return Found
 end
 -- Public
 function Weaver.Start(): ()
-	assert(not Started, "Weaver has already been started")
+	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 
 	Started = true
 	table.freeze(Controllers)
@@ -121,14 +124,14 @@ function Weaver.GetService(Name: string): WeaverService
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetService"))
 
 	local Type: string = type(Name)
-	assert(Type == "string", `Service name must be string, got { Type }`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 
 	local Cached: WeaverService? = Services[Name]
 	if Cached then
 		return Cached
 	end
 
-	local Path: Instance = FindInternal():WaitForChild(Name)
+	local Path: Instance = FindCommunication():WaitForChild(Name)
 	local Service: WeaverService = {}
 
 	for _, Child: Instance in Path:GetChildren() do
@@ -149,10 +152,10 @@ function Weaver.GetController(Name: string): WeaverController
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetController"))
 
 	local Type: string = type(Name)
-	assert(Type == "string", `Controller name must be string, got { Type }`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Controller", "string", Type))
 
 	local Controller: WeaverController? = Controllers[Name]
-	return assert(Controller, `Controller { Name } does not exist`)
+	return assert(Controller, string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Controller", Name))
 end
 
 function Weaver.CreateController(Controller: WeaverController): WeaverController
@@ -161,8 +164,8 @@ function Weaver.CreateController(Controller: WeaverController): WeaverController
 	local Name: string = Controller.Name
 	local Type: string = type(Name)
 
-	assert(Type == "string", `Name must be a string, got { Type }`)
-	assert(not HasController(Name), `{ Name } already exists as a controller`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Controller", "string", Type))
+	assert(not HasController(Name), string.format(Exceptions.EXCEPTION_EXISTS_AS, "Controller", Name))
 
 	Controllers[Name] = Controller
 	return Controller
@@ -171,7 +174,7 @@ function Weaver.AddControllers(Handle: Instance): { WeaverController }
 	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
 
 	local Type: string = typeof(Handle)
-	assert(Type == "Instance", `Handle must be an Instance, got { Type }`)
+	assert(Type == "Instance", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))
 
 	local Added: { WeaverController } = {}
 	local Index: number = 0

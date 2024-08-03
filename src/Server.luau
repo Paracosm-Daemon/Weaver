@@ -2,12 +2,15 @@
 -- Module
 local Weaver: WeaverImpl = {} :: WeaverImpl
 -- Modules
-local Util = script.Parent.Util
+local Module = script.Parent
 
-local RemoteSignal = require(Util.RemoteSignal)
-local Exceptions = require(Util.Exceptions)
-local Helpers = require(Util.Helpers)
-local Paths = require(Util.Paths)
+local Internals = Module.Internals
+local Util = Module.Util
+
+local RemoteSignal = require(Internals.RemoteSignal)
+local Exceptions = require(Internals.Exceptions)
+local Helpers = require(Internals.Helpers)
+local Paths = require(Internals.Paths)
 -- Constants
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
@@ -46,7 +49,7 @@ local function HasService(Name: string): boolean
 end
 -- Public
 function Weaver.Start(): ()
-	assert(not Started, "Weaver has already been started")
+	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 
 	Started = true
 	table.freeze(Services)
@@ -148,10 +151,10 @@ function Weaver.GetService(Name: string): WeaverService
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetService"))
 
 	local Type: string = type(Name)
-	assert(Type == "string", `Service name must be string, got { Type }`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 
 	local Service: WeaverService? = Services[Name]
-	return assert(Service, `Service { Service } does not exist`)
+	return assert(Service, string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
 
 function Weaver.CreateService(Service: WeaverServiceOmitClient): WeaverService
@@ -160,8 +163,8 @@ function Weaver.CreateService(Service: WeaverServiceOmitClient): WeaverService
 	local Name: string = Service.Name
 	local Type: string = type(Name)
 
-	assert(Type == "string", `Name must be a string, got { Type }`)
-	assert(not HasService(Name), `{ Name } already exists as a service`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
+	assert(not HasService(Name), string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
 
 	local Cast: WeaverService = Service :: WeaverService
 	local Client: WeaverServiceClient = Cast.Client
@@ -180,7 +183,7 @@ function Weaver.AddServices(Handle: Instance): { WeaverService }
 	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
 
 	local Type: string = typeof(Handle)
-	assert(Type == "Instance", `Handle must be an Instance, got { Type }`)
+	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))
 
 	local Added: { WeaverService } = {}
 	local Index: number = 0
