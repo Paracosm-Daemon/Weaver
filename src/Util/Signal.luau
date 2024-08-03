@@ -60,7 +60,7 @@ type SignalConnectionImpl =
 	-- Methods
 	new: (Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
-		Disconnects the connection, removing it from the signal.
+		Disconnects the connection, removing it from the Signal it is connected to.
 	]=]--
 	Disconnect: (self: SignalConnection) -> ();
 }
@@ -168,7 +168,7 @@ function SignalConnection.new(Callback: ConnectionCallback): SignalConnection
 	}, SignalConnection) :: SignalConnection
 end
 --[=[
-	Disconnects the connection, removing it from the signal.
+	Disconnects the connection, removing it from the [Signal] it is connected to.
 ]=]--
 function SignalConnection:Disconnect(): ()
 	self.Connected = false
