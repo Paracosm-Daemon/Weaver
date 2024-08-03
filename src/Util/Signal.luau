@@ -35,11 +35,11 @@ type SignalImpl =
 	]=]--
 	Fire: (self: Signal, ...any) -> ();
 	--[=[
-		Connects `Callback` to this signal, creating a new `Connection`.
+		Connects `Callback` to this signal, creating a new `SignalConnection`.
 	]=]--
 	Connect: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
-		Connects `Callback` to this signal in parallel, creating a new `Connection`. Useful for Parallel Luau.
+		Connects `Callback` to this signal in parallel, creating a new `SignalConnection`. Useful for Parallel Luau.
 	]=]--
 	ConnectParallel: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
@@ -105,10 +105,10 @@ function Signal:Fire(...): ()
 	end
 end
 --[=[
-	Connects `Callback` to this signal, creating a new `Connection`.
+	Connects `Callback` to this signal, creating a new [SignalConnection].
 
 	@param Callback ConnectionCallback -- The function to connect.
-	@return Connection
+	@return SignalConnection
 ]=]--
 function Signal:Connect(Callback: ConnectionCallback): SignalConnection
 	local Connected: SignalConnection = Connection.new(Callback)
@@ -119,10 +119,10 @@ function Signal:Connect(Callback: ConnectionCallback): SignalConnection
 	return Connected
 end
 --[=[
-	Connects `Callback` to this signal in parallel, creating a new `Connection`. Useful for Parallel Luau.
+	Connects `Callback` to this signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.
 
 	@param Callback ConnectionCallback -- The function to connect.
-	@return Connection
+	@return SignalConnection
 ]=]--
 function Signal:ConnectParallel(Callback: ConnectionCallback): SignalConnection
 	return self:Connect(function(...): ()
