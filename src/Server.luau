@@ -183,7 +183,7 @@ function Weaver.AddServices(Handle: Instance): { WeaverService }
 	assert(not Started, Exceptions.EXCEPTION_BEFORE_START)
 
 	local Type: string = typeof(Handle)
-	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))
+	assert(Type == "Instance", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Handle", "Instance", Type))
 
 	local Added: { WeaverService } = {}
 	local Index: number = 0
