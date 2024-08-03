@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.7
       - name: Install Rokit
         uses: paracosm-daemon/setup-rokit-rblx@v1.0.0
         with:
