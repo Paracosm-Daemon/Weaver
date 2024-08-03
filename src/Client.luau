@@ -1,5 +1,12 @@
 --!strict
 -- Module
+--[=[
+	@class WeaverClient
+
+	The client backend of Weaver.
+
+	All of the logic here is for starting and handling controllers alongside handling service Bridge with the server.
+]=]--
 local Weaver: WeaverImpl = {} :: WeaverImpl
 -- Services
 local Players = game:GetService("Players")
@@ -19,7 +26,7 @@ local Services: { [string]: WeaverService } = {}
 local Queue: { thread } = {}
 local Waiting: number = 0
 
-local Communication: Folder
+local Bridge: Folder
 
 local Running: boolean = false
 local Started: boolean = false
@@ -28,13 +35,13 @@ local Started: boolean = false
 local function HasController(Name: string): boolean
 	return Controllers[Name] ~= nil
 end
-local function FindCommunication(): Folder
-	if Communication then
-		return Communication
+local function FindBridge(): Folder
+	if Bridge then
+		return Bridge
 	end
 	for _, Child: Instance in Paths.TREE:GetChildren() do
 		if (Child.Name == Paths.ORIGIN) and Child:IsA("Folder") then
-			Communication = Child
+			Bridge = Child
 			return Child
 		end
 	end
@@ -42,19 +49,19 @@ local function FindCommunication(): Folder
 	local Thread: thread = coroutine.running()
 	local Connection: RBXScriptConnection
 
-	local Found: Folder
+	local Located: Folder
 	Connection = Paths.TREE.ChildAdded:Connect(function(Child: Instance): ()
 		if (Child.Name == Paths.ORIGIN) and Child:IsA("Folder") then
-			Found = Child
+			Located = Child
 			task.spawn(Thread)
 		end
 	end)
 	coroutine.yield()
 
 	Connection:Disconnect()
-	Communication = Found
+	Bridge = Located
 
-	return Found
+	return Located
 end
 -- Public
 function Weaver.Start(): ()
@@ -131,7 +138,7 @@ function Weaver.GetService(Name: string): WeaverService
 		return Cached
 	end
 
-	local Path: Instance = FindCommunication():WaitForChild(Name)
+	local Path: Instance = FindBridge():WaitForChild(Name)
 	local Service: WeaverService = {}
 
 	for _, Child: Instance in Path:GetChildren() do
