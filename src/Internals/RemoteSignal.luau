@@ -81,7 +81,7 @@ function RemoteSignal:Fire(First: any, ...): ()
 
 		return
 	end
-	self._Instance:FireServer(...)
+	self._Instance:FireServer(First, ...)
 end
 function RemoteSignal:FireAll(...): ()
 	assert(IS_SERVER, EXCEPTION_SERVER_ONLY)

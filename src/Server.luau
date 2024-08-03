@@ -66,8 +66,8 @@ function Weaver.Start(): ()
 			local Type: string = typeof(Value)
 			if Type == "function" then
 				local Signal: RemoteFunction = Instance.new("RemoteFunction")
-				Signal.OnServerInvoke = function(...): (...any)
-					return Value(Client, ...)
+				Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+					return Value(Client, Invoker, ...)
 				end
 
 				Signal.Name = Index
