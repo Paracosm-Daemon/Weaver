@@ -5,20 +5,28 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Weaver = require(ReplicatedStorage.Weaver)
 -- Service
 local Module = Weaver.CreateService{ Name = script.Name }
-Module.Client.Foo = Weaver.CreateRemoteSignal()
-
-function Module.Client:Qux(Client: Player, Frobulations: number): (number, number)
-	return Client.UserId + Frobulations, self.Server:Baz(Frobulations) :: number
+-- Variables
+Module.Client.Remote = Weaver.CreateRemoteSignal()
+-- Functions
+-- Client
+function Module.Client:Frobulate(Client: Player, Frobulations: number): number
+	warn(Client, "caused a frobulation")
+	return self.Server:Frobulate(Frobulations)
 end
-
-function Module:Baz(Frobulations: number): number
+-- Server
+function Module:Frobulate(Frobulations: number): number
 	return 1 + Frobulations
 end
+
 function Module:WeaverInit(): ()
-	self.Client.Foo:Connect(function(Client: Player, Bar: string): ()
-		warn(Client, "said", Bar)
-		self.Client.Foo:Fire(Client, Bar)
+	print("foo")
+	self.Client.Remote:Connect(function(Client: Player, Input: string): ()
+		warn(Client, "input", Input)
+		self.Client.Remote:Fire(Client, "quuz")
 	end)
 end
-
+function Module:WeaverStart(): ()
+	print("bar")
+end
+-- Main
 return Module

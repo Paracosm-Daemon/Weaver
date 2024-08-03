@@ -5,19 +5,19 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Weaver = require(ReplicatedStorage.Weaver)
 -- Service
 local Module = Weaver.CreateController{ Name = script.Name }
-
+-- Functions
 function Module:WeaverInit(): ()
-	print("foo")
+	print("baz")
 end
 function Module:WeaverStart(): ()
-	print("bar")
+	print("qux")
 
 	local TestService = Weaver.GetService("test_service")
-	TestService.Foo:Connect(function(Result: string): ()
-		print(Result)
-		warn(TestService:Qux(17))
+	TestService.Remote:Connect(function(Result: string): ()
+		print("Server output", Result)
+		warn(TestService:Frobulate(3))
 	end)
-	TestService.Foo:Fire("baz")
+	TestService.Remote:Fire("quux")
 end
-
+-- Main
 return Module
