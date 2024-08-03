@@ -1,5 +1,12 @@
 --!strict
 -- Module
+--[=[
+	@class RemoteSignal
+
+	Weaver's built-in implementation for RemoteEvents.
+
+	This is an interface meant to make using RemoteEvents much easier, with functions identical to [Signal].
+]=]--
 local RemoteSignal: RemoteSignalImpl = {} :: RemoteSignalImpl
 
 RemoteSignal.__index = RemoteSignal
@@ -18,44 +25,66 @@ type RemoteSignalImpl =
 	-- Methods
 	new: (Instance: SignalListener) -> RemoteSignal;
 	--[=[
-		Connects a function to this signal.
+		On the client, fires to the server.
 
-		Executes when a client fires this signal.
-	]=]--
-	Connect: (self: RemoteSignal, Callback: ConnectionCallback) -> RBXScriptConnection;
-	--[=[
-		Fires to a specific client.
+		On the server, fires to the specified client. The first argument of `Fire` must be a Player in this case.
 	]=]--
 	Fire: (self: RemoteSignal, ...any) -> ();
 	--[=[
-		Fires to all clients in the game.
+		Fires to all clients in the game. This function only works on the server.
 	]=]--
 	FireAll: (self: RemoteSignal, Client: Player, ...any) -> ();
 	--[=[
-		Fires to all clients specified in `For`.
+		Fires to all clients specified in `For`. This function only works on the server.
 	]=]--
 	FireFor: (self: RemoteSignal, For: { Player }, ...any) -> ();
 	--[=[
-		Fires to all clients in the game, except for the clients specified.
+		Fires to all clients in the game, except for the clients specified. This function only works on the server.
 	]=]--
 	FireExcept: (self: RemoteSignal, Excluding: { Player }, ...any) -> ();
-}
+	--[=[
+		Connects `Callback` to this signal.
 
-type ConnectionCallback = (Client: Player, ...any) -> ()
+		Executes when a client fires this signal to the server, or vice versa.
+	]=]--
+	Connect: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
+	--[=[
+		Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+
+		Executes when a client fires this signal to the server, or vice versa.
+	]=]--
+	ConnectParallel: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
+	--[=[
+		Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+	]=]--
+	Once: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
+	--[=[
+		Waits for the event to fire before resuming the current thread.
+	]=]--
+	Wait: (self: RemoteSignal) -> (...any);
+}
+--[=[
+	@type RemoteConnectionCallback (...any) -> () | (Client: Player, ...any)
+	@within RemoteSignal
+]=]--
+type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
 export type SignalListener = Instance & {
 	OnServerEvent: RBXScriptSignal<(Player, ...any)>;
 	OnClientEvent: RBXScriptSignal<...any>;
 
-	FireClient: ConnectionCallback;
+	FireClient: (Client: Player, ...any) -> ();
 
 	FireAllClients: (...any) -> ();
 	FireServer: (...any) -> ();
 }
 export type RemoteSignal = typeof(setmetatable({} :: {
 	_Instance: SignalListener;
+	_Event: RBXScriptSignal;
 }, {} :: RemoteSignalImpl))
+-- Modules
+local Internals = script.Parent
+local Exceptions = require(Internals.Exceptions)
 -- Constants
-local EXCEPTION_SERVER_ONLY: string = "Must be ran on the server to use this function"
 local IS_SERVER: boolean = RunService:IsServer()
 -- Variables
 local Clients: { [number]: Player } = {}
@@ -64,44 +93,104 @@ local Hash: { [Player]: number } = {}
 local Connected: number = 0
 -- Functions
 function RemoteSignal.new(From: SignalListener): RemoteSignal
-	return setmetatable({ _Instance = From }, RemoteSignal)
+	return setmetatable({
+		_Instance = From;
+		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
+	}, RemoteSignal)
 end
-function RemoteSignal:Connect(Callback: (...any) -> () | ConnectionCallback): RBXScriptConnection
-	return
-		if IS_SERVER then
-			self._Instance.OnServerEvent:Connect(Callback :: ConnectionCallback)
-		else
-			self._Instance.OnClientEvent:Connect(Callback :: (...any) -> ())
-end
+--[=[
+	On the client, fires to the server.
 
-function RemoteSignal:Fire(First: any, ...): ()
+	On the server, fires to the specified client. **The first argument of `Fire` must be a Player in this case.**
+
+	@param ... ...any -- The arguments to send over this RemoteSignal.
+]=]--
+function RemoteSignal:Fire(...): ()
 	if IS_SERVER then
-		assert((typeof(First) == "Instance") and First:IsA("Player"), "The first argument of FireClient must be a player")
-		self._Instance:FireClient(First, ...)
+		local Client: any = (...)
+
+		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
+		self._Instance:FireClient(Client, ...)
 
 		return
 	end
-	self._Instance:FireServer(First, ...)
+	self._Instance:FireServer(...)
 end
+--[=[
+	Fires to all clients in the game. **This function only works on the server.**
+
+	@param ... ...any
+]=]--
 function RemoteSignal:FireAll(...): ()
-	assert(IS_SERVER, EXCEPTION_SERVER_ONLY)
+	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 	self._Instance:FireAllClients(...)
 end
+--[=[
+	Fires to all clients specified in `For`. **This function only works on the server.**
 
+	@param For { Player }
+	@param ... ...any
+]=]--
 function RemoteSignal:FireFor(For: { Player }, ...): ()
-	assert(IS_SERVER, EXCEPTION_SERVER_ONLY)
+	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 	for _, Client: Player in For do
 		self:Fire(Client, ...)
 	end
 end
+--[=[
+	Fires to all clients in the game, except for the clients specified. **This function only works on the server.**
+
+	@param Excluding { Player }
+	@param ... ...any
+]=]--
 function RemoteSignal:FireExcept(Excluding: { Player }, ...): ()
-	assert(IS_SERVER, EXCEPTION_SERVER_ONLY)
+	assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 
 	local For: { Player } = table.clone(Clients)
 	for _, Client: Player in Excluding do
 		For[Hash[Client]] = nil
 	end
 	self:FireFor(For, ...)
+end
+--[=[
+	Connects `Callback` to this signal.
+
+	Executes when a client fires this signal to the server, or vice versa.
+
+	@param Callback RemoteConnectionCallback -- The function to connect.
+	@return RBXScriptConnection
+]=]--
+function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConnection
+	return self._Event:Connect(Callback)
+end
+--[=[
+	Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+
+	Executes when a client fires this signal to the server, or vice versa.
+
+	@param Callback RemoteConnectionCallback -- The function to connect.
+	@return RBXScriptConnection
+]=]--
+function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXScriptConnection
+	return self._Event:ConnectParallel(Callback)
+end
+--[=[
+	Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+
+	@param Callback RemoteConnectionCallback -- The function to connect.
+	@return RBXScriptConnection
+]=]--
+function RemoteSignal:Once(Callback: RemoteConnectionCallback): RBXScriptConnection
+	return self._Event:Once(Callback)
+end
+--[=[
+	Waits for the event to fire before resuming the current thread.
+
+	@yields
+	@return ...any -- All of the data that the signal returned from one event.
+]=]--
+function RemoteSignal:Wait(): (...any)
+	return self._Event:Wait()
 end
 -- Main
 if IS_SERVER then
