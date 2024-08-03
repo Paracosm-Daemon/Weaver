@@ -23,6 +23,10 @@ function Module:WeaverInit(): ()
 	self.Client.Remote:Connect(function(Client: Player, Input: string): ()
 		warn(Client, "input", Input)
 		self.Client.Remote:Fire(Client, "quuz")
+
+		self.Client.Remote:FireAll("FireAll")
+		self.Client.Remote:FireFor({ Client }, "FireFor")
+		self.Client.Remote:FireExcept({ Client }, "FireExcept")
 	end)
 end
 function Module:WeaverStart(): ()
