@@ -307,12 +307,12 @@ type WeaverMockService =
 export type WeaverExposed =
 {
 	Server: WeaverService;
-	[string]: RemoteSignal.RemoteSignal | WeaverMethod;
+	[string]: RemoteSignal.RemoteSignal & WeaverMethod;
 }
 --[=[
 	The type used for all services on the server.
 
-	@type WeaverService { Client: { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@type WeaverService { Client: { Server: WeaverService, [string]: RemoteSignal & WeaverMethod }, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
 	@within WeaverServer
 ]=]--
 export type WeaverService =
