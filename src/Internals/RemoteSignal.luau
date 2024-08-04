@@ -97,7 +97,7 @@ function RemoteSignal.new(From: SignalListener): RemoteSignal
 end
 if IS_SERVER then
 	--[=[
-		Fires to the specified client, from the server. **The first argument of `Fire` must be a Player.**
+		Fires to the specified client, from the server. **The first argument of `Fire` must be a [Player].**
 
 		@server
 		@param ... ...any -- The arguments to send over this RemoteSignal.
