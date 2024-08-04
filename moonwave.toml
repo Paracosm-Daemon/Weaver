@@ -1,0 +1,34 @@
+gitSourceBranch = "main"
+
+[[classOrder]]
+section = "Core"
+classes = ["WeaverServer", "WeaverClient"]
+
+[[classOrder]]
+section = "Networking"
+classes = ["RemoteSignal", "Signal", "SignalConnection"]
+
+[home]
+enabled = true
+includeReadme = false
+
+[docusaurus]
+url = "https://paracosm-daemon.github.io"
+baseUrl = "/Weaver"
+tagline = "A fast, lightweight game framework for Roblox"
+
+[footer]
+style = "dark"
+copyright = "Copyright © 2024 Oliver S. Built with Moonwave and Docusaurus."
+
+[[home.features]]
+title = "Simple Structure"
+description = "Since Weaver is built around a single-script architecture, communicating between multiple modules is seamless - ditto for communication between the server and the client."
+
+[[home.features]]
+title = "Painless Networking"
+description = "Due to the nature of Weaver, all networking is made simple, as services and controllers natively support Weaver's RemoteSignal implementation; you don't need to use any Instances."
+
+[[home.features]]
+title = "Effortless Integration"
+description = "Weaver doesn't take much effort to install. Once it's added into your Roblox project, there is little setup required to get it working as intended and integrated with your codebase."
