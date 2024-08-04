@@ -90,9 +90,9 @@ export type SignalConnection = typeof(setmetatable({} :: {
 	@return Signal
 ]=]--
 function Signal.new(): Signal
-	return setmetatable({
+	return table.freeze(setmetatable({
 		_Connections = {};
-	}, Signal)
+	}, Signal))
 end
 --[=[
 	Fires the signal with the specified data.
@@ -175,4 +175,4 @@ function SignalConnection:Disconnect(): ()
 	self._Finish()
 end
 -- Main
-return Signal
+return table.freeze(Signal)

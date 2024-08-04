@@ -1,8 +1,5 @@
 --!strict
-return
-{
-	EXCEPTION_SERVER_ONLY = "Must be ran on the server to use this function";
-
+return table.freeze{
 	EXCEPTION_BEFORE_START = "%s cannot be added after Weaver has started";
 	EXCEPTION_MUST_BE_TYPE = "%s must be of type %s, got %s";
 

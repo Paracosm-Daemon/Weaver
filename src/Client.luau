@@ -2,14 +2,18 @@
 -- Module
 --[=[
 	@class WeaverClient
+	@client
 
 	The client backend of Weaver.
 
-	All of the logic here is for starting and handling controllers alongside handling service Bridge with the server.
+	All of the logic here is for starting and handling controllers alongside the communication bridge with the server.
 ]=]--
 local Weaver: WeaverImpl = {} :: WeaverImpl
 -- Services
+local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
+
+assert(RunService:IsClient(), "WeaverClient cannot be ran outside of the client!")
 -- Modules
 local Module = script.Parent
 

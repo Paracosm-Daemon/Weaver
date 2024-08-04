@@ -81,9 +81,6 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 	_Instance: SignalListener;
 	_Event: RBXScriptSignal;
 }, {} :: RemoteSignalImpl))
--- Modules
-local Internals = script.Parent
-local Exceptions = require(Internals.Exceptions)
 -- Constants
 local IS_SERVER: boolean = RunService:IsServer()
 -- Variables
@@ -93,10 +90,10 @@ local Hash: { [Player]: number } = {}
 local Connected: number = 0
 -- Functions
 function RemoteSignal.new(From: SignalListener): RemoteSignal
-	return setmetatable(table.freeze{
+	return table.freeze(setmetatable({
 		_Instance = From;
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
-	}, RemoteSignal)
+	}, RemoteSignal))
 end
 if IS_SERVER then
 	--[=[
@@ -116,7 +113,6 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireAll(...): ()
-		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 		self._Instance:FireAllClients(...)
 	end
 	--[=[
@@ -127,7 +123,6 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireFor(For: { Player }, ...): ()
-		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
 		for _, Client: Player in For do
 			self._Instance:FireClient(Client, ...)
 		end
@@ -140,8 +135,6 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireExcept(Excluding: { Player }, ...): ()
-		assert(IS_SERVER, Exceptions.EXCEPTION_SERVER_ONLY)
-
 		local For: { Player } = table.clone(Clients)
 		for _, Client: Player in Excluding do
 			For[Hash[Client]] = nil
