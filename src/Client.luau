@@ -285,10 +285,10 @@ end
 --[=[
 	The type used for all services on the client.
 
-	@type WeaverService { [string]: RemoteSignal & (self: WeaverService, ...any) -> (...any) }
+	@type WeaverService { [string]: RemoteSignal | (self: WeaverService, ...any) -> (...any) }
 	@within WeaverClient
 ]=]--
-export type WeaverService = { [string]: RemoteSignal.RemoteSignal & (self: WeaverService, ...any) -> () }
+export type WeaverService = { [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any) }
 --[=[
 	The type used for all controllers.
 
