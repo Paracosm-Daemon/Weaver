@@ -143,13 +143,13 @@ function WeaverClient.OnStart(): ()
 	coroutine.yield()
 end
 --[=[
-	Returns the [WeaverServiceClient] found from the server.
+	Returns the [WeaverService](WeaverClient#WeaverService) found from the server.
 
 	This will yield until a service matching the name is found.
 
 	@yields
 	@param Name string
-	@return WeaverServiceClient
+	@return WeaverService
 ]=]--
 function WeaverClient.GetService(Name: string): WeaverService
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetService"))
@@ -216,7 +216,7 @@ function WeaverClient.GetService(Name: string): WeaverService
 	return Service
 end
 --[=[
-	If the `Name` is used for a controller, returns the[ WeaverController] from the server.
+	If the `Name` is used for a controller, returns the [WeaverController] from the server.
 
 	**This will throw an error if Weaver has not started, or if `Name` is not used for a controller.**
 
@@ -255,7 +255,7 @@ end
 --[=[
 	Adds all services from Handle to Weaver automatically.
 
-	Returns an array of all of the added [WeaverController]s.
+	Returns an array of all of the added [WeaverControllers](WeaverClient#WeaverController).
 
 	@param Handle Instance
 	@return { WeaverController }
@@ -285,10 +285,10 @@ end
 --[=[
 	The type used for all services on the client.
 
-	@type WeaverServiceClient { [string]: RemoteSignal | (self: WeaverServiceClient, ...any) -> (...any) }
+	@type WeaverService { [string]: RemoteSignal & (self: WeaverService, ...any) -> (...any) }
 	@within WeaverClient
 ]=]--
-export type WeaverService = { [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> () }
+export type WeaverService = { [string]: RemoteSignal.RemoteSignal & (self: WeaverService, ...any) -> () }
 --[=[
 	The type used for all controllers.
 
@@ -328,7 +328,7 @@ export type WeaverImpl =
 
 		This will yield until a service matching the name is found.
 	]=]--
-	GetService: (Service: string) -> WeaverService;
+	GetService: (Name: string) -> WeaverService;
 	--[=[
 		If the `Name` is used for a controller, returns the WeaverController from the server.
 

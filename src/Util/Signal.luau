@@ -5,13 +5,19 @@
 
 	Weaver's built-in implementation for signals.
 
-	This is meant to replace BindableEvents with simple and fast logic, omitting the need of Instances.
+	This is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances.
 ]=]--
 local Signal: SignalImpl = {} :: SignalImpl
 --[=[
 	@class SignalConnection
 
 	The connection class used by [Signal] objects.
+]=]--
+--[=[
+	If the [SignalConnection] is connected to a [Signal], this value will be `true`, otherwise `false`.
+
+	@prop Connected boolean
+	@within SignalConnection
 ]=]--
 local SignalConnection: SignalConnectionImpl = {} :: SignalConnectionImpl
 

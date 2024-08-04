@@ -176,7 +176,7 @@ function WeaverServer.OnStart(): ()
 	coroutine.yield()
 end
 --[=[
-	If the `Name` is used for a service, returns the [WeaverService] from the server.
+	If the `Name` is used for a service, returns the [WeaverService](WeaverServer#WeaverService) from the server.
 
 	**This will throw an error if Weaver has not started, or if `Name` is not used for a service.**
 
@@ -192,7 +192,7 @@ function WeaverServer.GetService(Name: string): WeaverService
 	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
 --[=[
-	Creates and adds a [WeaverService] before Weaver has started. The WeaverMockService returned will be used to create a [WeaverService] once Weaver starts.
+	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started. The WeaverMockService returned will be used to create a [WeaverService](WeaverServer#WeaverService) once Weaver starts.
 
 	**This will throw an error if Weaver has started.**
 
@@ -218,7 +218,7 @@ end
 --[=[
 	Adds all services from `Handle` to Weaver automatically.
 
-	Returns an array of all of the added [WeaverService]s.
+	Returns an array of all of the added [WeaverServices](WeaverServer#WeaverService).
 
 	@param Handle Instance
 	@return { WeaverService }
@@ -299,9 +299,9 @@ type WeaverMockService =
 	WeaverInit: (self: WeaverService) -> ()?;
 }
 --[=[
-	The type that the `Client` table in [WeaverService] uses.
+	The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.
 
-	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }
+	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal & WeaverMethod }
 	@within WeaverServer
 ]=]--
 export type WeaverExposed =
