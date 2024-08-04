@@ -2,7 +2,7 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Modules
-local Weaver = require(ReplicatedStorage.Weaver.Client)
+local Weaver = require(ReplicatedStorage.Weaver)
 -- https://github.com/luau-lang/luau/issues/1357
 local Signal = require(ReplicatedStorage.Weaver.Util.Signal)
 -- Service
