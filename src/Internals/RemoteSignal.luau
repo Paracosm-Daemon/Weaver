@@ -196,7 +196,7 @@ end
 if IS_SERVER then
 	--[[
 		Using GetPlayers() constantly can be expensive,
-		so implement simple connections to store all clients easily
+		so I've implemented connections to store all clients
 	]]--
 	Players.PlayerAdded:Connect(function(Client: Player): ()
 		Connected += 1
@@ -220,4 +220,6 @@ if IS_SERVER then
 		Hash[Client] = Index
 	end
 end
-return table.freeze(RemoteSignal)
+return table.freeze(RemoteSignal) :: {
+	new: (Instance: SignalListener) -> RemoteSignal;
+}

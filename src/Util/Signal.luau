@@ -69,10 +69,11 @@ type SignalConnectionImpl =
 	@within Signal
 ]=]--
 type ConnectionCallback = (...any) -> ()
+type ConnectionsMap = { [SignalConnection]: boolean }
 
 export type Signal = typeof(setmetatable({} :: {
 	-- Variables
-	_Connections: { [SignalConnection]: boolean };
+	_Connections: ConnectionsMap;
 }, {} :: SignalImpl))
 export type SignalConnection = typeof(setmetatable({} :: {
 	-- Variables
@@ -80,7 +81,7 @@ export type SignalConnection = typeof(setmetatable({} :: {
 	Connected: boolean;
 	-- Private
 	_Callback: ConnectionCallback;
-	_Finish: () -> ();
+	_Ref: ConnectionsMap;
 }, {} :: SignalConnectionImpl))
 -- Functions
 -- Signal
@@ -115,7 +116,10 @@ function Signal:Connect(Callback: ConnectionCallback): SignalConnection
 	Connection._Finish = function(): ()
 		self._Connections[Connection] = nil
 	end
+
+	Connection._Ref = self._Connections
 	self._Connections[Connection] = true
+
 	return Connection
 end
 --[=[
@@ -161,10 +165,12 @@ function Signal:Wait(): (...any)
 	return coroutine.yield()
 end
 -- Connection
-function SignalConnection.new(Callback: ConnectionCallback): SignalConnection
+function SignalConnection.new(Callback: ConnectionCallback, Ref: ConnectionsMap): SignalConnection
 	return setmetatable({
 		Connected = true;
+
 		_Callback = Callback;
+		_Ref = Ref;
 	}, SignalConnection) :: SignalConnection
 end
 --[=[
@@ -175,4 +181,6 @@ function SignalConnection:Disconnect(): ()
 	self._Finish()
 end
 -- Main
-return table.freeze(Signal)
+return table.freeze(Signal) :: {
+	new: () -> Signal;
+}
