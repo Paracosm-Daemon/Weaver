@@ -58,7 +58,7 @@ type SignalConnectionImpl =
 	-- Variables
 	__index: SignalConnectionImpl;
 	-- Methods
-	new: (Callback: ConnectionCallback) -> SignalConnection;
+	new: (Callback: ConnectionCallback, Ref: ConnectionsMap) -> SignalConnection;
 	--[=[
 		Disconnects the connection, removing it from the Signal it is connected to.
 	]=]--
@@ -112,14 +112,8 @@ end
 	@return SignalConnection
 ]=]--
 function Signal:Connect(Callback: ConnectionCallback): SignalConnection
-	local Connection: SignalConnection = SignalConnection.new(Callback)
-	Connection._Finish = function(): ()
-		self._Connections[Connection] = nil
-	end
-
-	Connection._Ref = self._Connections
+	local Connection: SignalConnection = SignalConnection.new(Callback, self._Connections)
 	self._Connections[Connection] = true
-
 	return Connection
 end
 --[=[
@@ -178,7 +172,7 @@ end
 ]=]--
 function SignalConnection:Disconnect(): ()
 	self.Connected = false
-	self._Finish()
+	self._Ref[self] = nil
 end
 -- Main
 return table.freeze(Signal) :: {
