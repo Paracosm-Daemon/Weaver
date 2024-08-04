@@ -112,9 +112,7 @@ end
 	@return SignalConnection
 ]=]--
 function Signal:Connect(Callback: ConnectionCallback): SignalConnection
-	local Connection: SignalConnection = SignalConnection.new(Callback, self._Connections)
-	self._Connections[Connection] = true
-	return Connection
+	return SignalConnection.new(Callback, self._Connections)
 end
 --[=[
 	Connects `Callback` to this signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.
@@ -160,12 +158,14 @@ function Signal:Wait(): (...any)
 end
 -- Connection
 function SignalConnection.new(Callback: ConnectionCallback, Ref: ConnectionsMap): SignalConnection
-	return setmetatable({
+	local self: SignalConnection = setmetatable({
 		Connected = true;
 
 		_Callback = Callback;
 		_Ref = Ref;
-	}, SignalConnection) :: SignalConnection
+	}, SignalConnection)
+	Ref[self] = true
+	return self
 end
 --[=[
 	Disconnects the connection, removing it from the [Signal] it is connected to.
