@@ -33,9 +33,6 @@ local Running: boolean = false
 local Started: boolean = false
 -- Functions
 -- Private
-local function HasController(Name: string): boolean
-	return Controllers[Name] ~= nil
-end
 local function FindBridge(): Folder
 	if Bridge then
 		return Bridge
@@ -173,7 +170,7 @@ function Weaver.CreateController(Controller: WeaverController): WeaverController
 	local Type: string = type(Name)
 
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Controller", "string", Type))
-	assert(not HasController(Name), string.format(Exceptions.EXCEPTION_EXISTS_AS, "Controller", Name))
+	assert(Controllers[Name] == nil, string.format(Exceptions.EXCEPTION_EXISTS_AS, "Controller", Name))
 
 	Controllers[Name] = Controller
 	return Controller
@@ -200,6 +197,17 @@ function Weaver.AddControllers(Handle: Instance): { WeaverController }
 	return Added
 end
 -- Types
+export type WeaverService = { [any]: any }
+export type WeaverController =
+{
+	-- Variables
+	Name: string;
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverController) -> ()?;
+	WeaverInit: (self: WeaverController) -> ()?;
+}
+
 export type WeaverImpl =
 {
 	-- Variables
@@ -240,17 +248,6 @@ export type WeaverImpl =
 		Returns an array of all of the added controllers.
 	]=]--
 	AddControllers: (Handle: Instance) -> { WeaverController };
-}
-
-export type WeaverService = { [any]: any }
-export type WeaverController =
-{
-	-- Variables
-	Name: string;
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverController) -> ()?;
-	WeaverInit: (self: WeaverController) -> ()?;
 }
 -- Main
 Weaver.Client = Players.LocalPlayer

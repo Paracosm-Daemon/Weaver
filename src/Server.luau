@@ -43,6 +43,7 @@ local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 	end;
 }
 -- Variables
+local Mockups: { [string]: WeaverMockService } = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
@@ -52,25 +53,26 @@ local Running: boolean = false
 local Started: boolean = false
 -- Functions
 -- Private
-local function HasService(Name: string): boolean
-	return Services[Name] ~= nil
-end
 -- Public
 function Weaver.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 
 	Started = true
-	table.freeze(Services)
+	table.freeze(Mockups)
 	-- Networking
 	local Communication: Folder = Instance.new("Folder")
 	Communication.Name = Paths.ORIGIN
 
-	for Name: string, Service: WeaverService in Services do
-		local Client: WeaverServiceClient = Service.Client
+	for Name: string, Service: WeaverMockService in Mockups do
+		local Client: WeaverService = {} :: WeaverService
 		local Network: Folder = Instance.new("Folder")
 
 		Network.Name = Name
-		for Index: any, Value: any in Client do
+		for Index: string, Value: any in Service.Client do
+			if typeof(Index) ~= "string" then
+				continue
+			end
+
 			local Type: string = typeof(Value)
 			if Type == "function" then
 				local Signal: RemoteFunction = Instance.new("RemoteFunction")
@@ -81,6 +83,7 @@ function Weaver.Start(): ()
 				Signal.Name = Index
 				Signal.Parent = Network
 
+				Client[Index] = Value
 				continue
 			end
 			if Type == "userdata" then
@@ -93,8 +96,14 @@ function Weaver.Start(): ()
 				continue
 			end
 		end
+
+		Client.Server = Service
+		Service.Client = Client
+
+		Services[Name] = Service :: WeaverService
 		Network.Parent = Communication
 	end
+	table.freeze(Services)
 	-- Init
 	for _, Service: WeaverService in Services do
 		local Init: any? = Service.WeaverInit
@@ -161,31 +170,25 @@ function Weaver.GetService(Name: string): WeaverService
 	local Type: string = type(Name)
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 
-	local Service: WeaverService? = Services[Name]
-	return assert(Service, string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
+	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
 
-function Weaver.CreateService(Service: WeaverServiceOmitClient): WeaverService
+function Weaver.CreateService(Service: WeaverServiceInit): WeaverMockService
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Name: string = Service.Name
 	local Type: string = type(Name)
 
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
-	assert(not HasService(Name), string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
+	assert(Mockups[Name] == nil, string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
 
-	local Cast: WeaverService = Service :: WeaverService
-	local Client: WeaverServiceClient = Cast.Client
-
-	if type(Client) == "table" then
-		Client.Server = Cast
-	else
-		Client = { Server = Cast }
-		Service.Client = Client
+	local Created: WeaverMockService = Service :: WeaverMockService
+	if typeof(Created.Client) ~= "table" then
+		Created.Client = {}
 	end
 
-	Services[Name] = Cast
-	return Cast
+	Mockups[Name] = Created
+	return Created
 end
 function Weaver.AddServices(Handle: Instance): { WeaverService }
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
@@ -217,6 +220,53 @@ function Weaver.CreateUnreliableSignal(): Helpers.Marker
 end
 -- Types
 type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
+type WeaverMethod = (self: WeaverClient, Invoker: Player, ...any) -> (...any)
+
+type WeaverMockExposed =
+{
+	[string]: Helpers.Marker | WeaverMethod;
+}
+
+type WeaverServiceInit =
+{
+	-- Variables
+	Client: WeaverMockExposed?;
+	Name: string;
+
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverMockService) -> ()?;
+	WeaverInit: (self: WeaverMockService) -> ()?;
+}
+type WeaverMockService =
+{
+	-- Variables
+	Client: WeaverMockExposed;
+	Name: string;
+
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverMockService) -> ()?;
+	WeaverInit: (self: WeaverMockService) -> ()?;
+}
+
+export type WeaverClient =
+{
+	Server: WeaverService;
+	[string]: RemoteSignal.RemoteSignal | WeaverMethod;
+}
+export type WeaverService =
+{
+	-- Variables
+	Client: WeaverClient;
+	Name: string;
+
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverMockService) -> ()?;
+	WeaverInit: (self: WeaverMockService) -> ()?;
+}
+
 export type WeaverImpl =
 {
 	-- Variables
@@ -243,7 +293,7 @@ export type WeaverImpl =
 
 		This method will only work before Weaver is started.
 	]=]--
-	CreateService: (Service: WeaverServiceOmitClient) -> WeaverService;
+	CreateService: (Service: WeaverServiceInit) -> WeaverMockService;
 	--[=[
 		Adds all services from `Handle` to Weaver automatically.
 
@@ -258,35 +308,6 @@ export type WeaverImpl =
 		Creates an unreliable remote signal.
 	]=]--
 	CreateUnreliableSignal: () -> Helpers.Marker;
-}
-
-type WeaverServiceOmitClient =
-{
-	-- Variables
-	Client: { [any]: any }?;
-	Name: string;
-
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
-}
-
-export type WeaverServiceClient =
-{
-	Server: WeaverService;
-	[any]: any;
-}
-export type WeaverService =
-{
-	-- Variables
-	Client: WeaverServiceClient;
-	Name: string;
-
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
 }
 -- Main
 Weaver.Util = Util
