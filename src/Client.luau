@@ -8,7 +8,7 @@
 
 	All of the logic here is for starting and handling controllers alongside the communication bridge with the server.
 ]=]--
-local Weaver: WeaverImpl = {} :: WeaverImpl
+local WeaverClient: WeaverImpl = {} :: WeaverImpl
 -- Services
 local Players = game:GetService("Players")
 -- Modules
@@ -22,7 +22,9 @@ local Exceptions = require(Internals.Exceptions)
 local Paths = require(Internals.Paths)
 -- Variables
 local Controllers: { [string]: WeaverController } = {}
+
 local Services: { [string]: WeaverService } = {}
+local Standby: { [string]: { thread } } = {}
 
 local Queue: { thread } = {}
 local Waiting: number = 0
@@ -49,20 +51,29 @@ local function FindBridge(): Folder
 
 	local Located: Folder
 	Connection = Paths.TREE.ChildAdded:Connect(function(Child: Instance): ()
+		if not Connection.Connected then
+			return
+		end
 		if (Child.Name == Paths.ORIGIN) and Child:IsA("Folder") then
 			Located = Child
+			Connection:Disconnect()
+
 			task.spawn(Thread)
 		end
 	end)
-	coroutine.yield()
 
-	Connection:Disconnect()
+	coroutine.yield()
 	Bridge = Located
 
 	return Located
 end
 -- Public
-function Weaver.Start(): ()
+--[=[
+	Starts Weaver.
+
+	**This will throw an error if Weaver is already started.**
+]=]--
+function WeaverClient.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 
 	Started = true
@@ -114,7 +125,14 @@ function Weaver.Start(): ()
 		Waiting = 0
 	end
 end
-function Weaver.OnStart(): ()
+--[=[
+	Yields until Weaver has started.
+
+	If Weaver has already started, this will not yield.
+
+	@yields
+]=]--
+function WeaverClient.OnStart(): ()
 	if Running then
 		return
 	end
@@ -124,8 +142,16 @@ function Weaver.OnStart(): ()
 
 	coroutine.yield()
 end
+--[=[
+	Returns the [WeaverServiceClient] found from the server.
 
-function Weaver.GetService(Name: string): WeaverService
+	This will yield until a service matching the name is found.
+
+	@yields
+	@param Name string
+	@return WeaverServiceClient
+]=]--
+function WeaverClient.GetService(Name: string): WeaverService
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetService"))
 
 	local Type: string = type(Name)
@@ -135,10 +161,39 @@ function Weaver.GetService(Name: string): WeaverService
 	if Cached then
 		return Cached
 	end
+	-- Prevent all possible instances of creating multiple Service tables, should it yield.
+	local Queued: { thread }? = Standby[Name]
+	if Queued then
+		table.insert(Queued, coroutine.running())
+		return coroutine.yield()
+	end
 
-	local Path: Instance = FindBridge():WaitForChild(Name)
+	local Yielding: { thread } = {}
+	Standby[Name] = Yielding
+
+	local Network: Folder = FindBridge()
+
+	local Found: Instance? = Network:FindFirstChild(Name)
+	local Path: Folder
+
+	if Found and Found:IsA("Folder") then
+		Path = Found
+	else
+		local Thread: thread = coroutine.running()
+		local Connection: RBXScriptConnection
+
+		Connection = Network.ChildAdded:Connect(function(Child: Instance): ()
+			if not Connection.Connected then
+				return
+			end
+			if Child:IsA("Folder") and (Child.Name == Name) then
+				Connection:Disconnect()
+				task.spawn(Thread)
+			end
+		end)
+	end
+
 	local Service: WeaverService = {}
-
 	for _, Child: Instance in Path:GetChildren() do
 		if Child:IsA("RemoteEvent") or Child:IsA("UnreliableRemoteEvent") then
 			Service[Child.Name] = RemoteSignal.new(Child :: RemoteSignal.SignalListener)
@@ -151,9 +206,24 @@ function Weaver.GetService(Name: string): WeaverService
 			continue
 		end
 	end
+
+	Services[Name] = Service
+	for _, Thread: thread in Yielding do
+		task.spawn(Thread, Service)
+	end
+
+	Standby[Name] = nil
 	return Service
 end
-function Weaver.GetController(Name: string): WeaverController
+--[=[
+	If the `Name` is used for a controller, returns the[ WeaverController] from the server.
+
+	**This will throw an error if Weaver has not started, or if `Name` is not used for a controller.**
+
+	@param Name string
+	@return WeaverController
+]=]--
+function WeaverClient.GetController(Name: string): WeaverController
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetController"))
 
 	local Type: string = type(Name)
@@ -162,8 +232,15 @@ function Weaver.GetController(Name: string): WeaverController
 	local Controller: WeaverController? = Controllers[Name]
 	return assert(Controller, string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Controller", Name))
 end
+--[=[
+	Creates and adds a [WeaverController] before Weaver has started.
 
-function Weaver.CreateController(Controller: WeaverController): WeaverController
+	**This will throw an error if Weaver has started.**
+
+	@param Controller WeaverController
+	@return WeaverController
+]=]--
+function WeaverClient.CreateController(Controller: WeaverController): WeaverController
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Controllers"))
 
 	local Name: string = Controller.Name
@@ -175,7 +252,15 @@ function Weaver.CreateController(Controller: WeaverController): WeaverController
 	Controllers[Name] = Controller
 	return Controller
 end
-function Weaver.AddControllers(Handle: Instance): { WeaverController }
+--[=[
+	Adds all services from Handle to Weaver automatically.
+
+	Returns an array of all of the added [WeaverController]s.
+
+	@param Handle Instance
+	@return { WeaverController }
+]=]--
+function WeaverClient.AddControllers(Handle: Instance): { WeaverController }
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Controllers"))
 
 	local Type: string = typeof(Handle)
@@ -197,7 +282,19 @@ function Weaver.AddControllers(Handle: Instance): { WeaverController }
 	return Added
 end
 -- Types
-export type WeaverService = { [any]: any }
+--[=[
+	The type used for all services on the client.
+
+	@type WeaverServiceClient { [string]: RemoteSignal | (self: WeaverServiceClient, ...any) -> (...any) }
+	@within WeaverClient
+]=]--
+export type WeaverService = { [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> () }
+--[=[
+	The type used for all controllers.
+
+	@type WeaverController { Name: string, [any]: any, WeaverStart: (self: WeaverController) -> ()?, WeaverInit: (self: WeaverController) -> ()? }
+	@within WeaverClient
+]=]--
 export type WeaverController =
 {
 	-- Variables
@@ -221,36 +318,38 @@ export type WeaverImpl =
 	]=]--
 	Start: () -> ();
 	--[=[
-		Runs when Weaver is started.
+		Yields until Weaver has started.
+
+		If Weaver has already started, this will not yield.
 	]=]--
 	OnStart: () -> ();
 	--[=[
-		Gets a service.
+		Returns the WeaverService found from the server.
 
-		If `Service` exists, returns what was exposed from the server.
+		This will yield until a service matching the name is found.
 	]=]--
 	GetService: (Service: string) -> WeaverService;
 	--[=[
-		Gets a controller.
+		If the `Name` is used for a controller, returns the WeaverController from the server.
 
-		If `Controller` exists, returns the `WeaverController` from the client.
+		This will throw an error if Weaver has not started, or if `Name` is not used for a controller.
 	]=]--
 	GetController: (Name: string) -> WeaverController;
 	--[=[
-		Creates a controller.
+		Creates and adds a controller before Weaver has started.
 
-		This method will only work before Weaver is started.
+		This will throw an error if Weaver has started.
 	]=]--
 	CreateController: (Controller: WeaverController) -> WeaverController;
 	--[=[
-		Adds all controllers from `Handle` to Weaver automatically.
+		Adds all services from Handle to Weaver automatically.
 
-		Returns an array of all of the added controllers.
+		Returns an array of all of the added WeaverControllers.
 	]=]--
 	AddControllers: (Handle: Instance) -> { WeaverController };
 }
 -- Main
-Weaver.Client = Players.LocalPlayer
-Weaver.Util = Util
+WeaverClient.Client = Players.LocalPlayer
+WeaverClient.Util = Util
 
-return Weaver
+return WeaverClient

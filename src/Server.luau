@@ -8,7 +8,7 @@
 
 	All of the logic here is for starting and handling services alongside the communication bridge with the client.
 ]=]--
-local Weaver: WeaverImpl = {} :: WeaverImpl
+local WeaverServer: WeaverImpl = {} :: WeaverImpl
 -- Modules
 local Module = script.Parent
 
@@ -54,7 +54,12 @@ local Started: boolean = false
 -- Functions
 -- Private
 -- Public
-function Weaver.Start(): ()
+--[=[
+	Starts Weaver.
+
+	**This will throw an error if Weaver is already started.**
+]=]--
+function WeaverServer.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 
 	Started = true
@@ -153,7 +158,14 @@ function Weaver.Start(): ()
 		Waiting = 0
 	end
 end
-function Weaver.OnStart(): ()
+--[=[
+	Yields until Weaver has started.
+
+	If Weaver has already started, this will not yield.
+
+	@yields
+]=]--
+function WeaverServer.OnStart(): ()
 	if Running then
 		return
 	end
@@ -163,8 +175,15 @@ function Weaver.OnStart(): ()
 
 	coroutine.yield()
 end
+--[=[
+	If the `Name` is used for a service, returns the [WeaverService] from the server.
 
-function Weaver.GetService(Name: string): WeaverService
+	**This will throw an error if Weaver has not started, or if `Name` is not used for a service.**
+
+	@param Name string
+	@return WeaverService
+]=]--
+function WeaverServer.GetService(Name: string): WeaverService
 	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetService"))
 
 	local Type: string = type(Name)
@@ -172,8 +191,14 @@ function Weaver.GetService(Name: string): WeaverService
 
 	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
+--[=[
+	Creates and adds a [WeaverService] before Weaver has started. The WeaverMockService returned will be used to create a [WeaverService] once Weaver starts.
 
-function Weaver.CreateService(Service: WeaverServiceInit): WeaverMockService
+	**This will throw an error if Weaver has started.**
+
+	@param Service { Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+]=]--
+function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverMockService
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Name: string = Service.Name
@@ -190,7 +215,15 @@ function Weaver.CreateService(Service: WeaverServiceInit): WeaverMockService
 	Mockups[Name] = Created
 	return Created
 end
-function Weaver.AddServices(Handle: Instance): { WeaverService }
+--[=[
+	Adds all services from `Handle` to Weaver automatically.
+
+	Returns an array of all of the added [WeaverService]s.
+
+	@param Handle Instance
+	@return { WeaverService }
+]=]--
+function WeaverServer.AddServices(Handle: Instance): { WeaverService }
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Type: string = typeof(Handle)
@@ -211,17 +244,33 @@ function Weaver.AddServices(Handle: Instance): { WeaverService }
 	end
 	return Added
 end
+--[=[
+	Creates a remote signal marker which is turned into a [RemoteSignal] when Weaver is started.
 
-function Weaver.CreateRemoteSignal(): Helpers.Marker
+	**This will only create a [RemoteSignal] if it is indexxed into the Client table.**
+
+	@return Marker
+]=]--
+function WeaverServer.CreateRemoteSignal(): Helpers.Marker
 	return REMOTE_SIGNAL_MARKER
 end
-function Weaver.CreateUnreliableSignal(): Helpers.Marker
+--[=[
+	Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox's [UnreliableRemoteEvent]
+
+	**This will only create a [RemoteSignal] if it is indexxed into the Client table.**
+
+	@return Marker
+]=]--
+function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 	return UNRELIABLE_SIGNAL_MARKER
 end
 -- Types
 type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
-type WeaverMethod = (self: WeaverClient, Invoker: Player, ...any) -> (...any)
-
+--[=[
+	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
+	@within WeaverServer
+]=]--
+type WeaverMethod = (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
 type WeaverMockExposed =
 {
 	[string]: Helpers.Marker | WeaverMethod;
@@ -235,8 +284,8 @@ type WeaverServiceInit =
 
 	[any]: any;
 	-- Methods
-	WeaverStart: (self: WeaverMockService) -> ()?;
-	WeaverInit: (self: WeaverMockService) -> ()?;
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
 }
 type WeaverMockService =
 {
@@ -246,25 +295,36 @@ type WeaverMockService =
 
 	[any]: any;
 	-- Methods
-	WeaverStart: (self: WeaverMockService) -> ()?;
-	WeaverInit: (self: WeaverMockService) -> ()?;
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
 }
+--[=[
+	The type that the `Client` table in [WeaverService] uses.
 
-export type WeaverClient =
+	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }
+	@within WeaverServer
+]=]--
+export type WeaverExposed =
 {
 	Server: WeaverService;
 	[string]: RemoteSignal.RemoteSignal | WeaverMethod;
 }
+--[=[
+	The type used for all services on the server.
+
+	@type WeaverService { Client: { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@within WeaverServer
+]=]--
 export type WeaverService =
 {
 	-- Variables
-	Client: WeaverClient;
+	Client: WeaverExposed;
 	Name: string;
 
 	[any]: any;
 	-- Methods
-	WeaverStart: (self: WeaverMockService) -> ()?;
-	WeaverInit: (self: WeaverMockService) -> ()?;
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
 }
 
 export type WeaverImpl =
@@ -279,36 +339,42 @@ export type WeaverImpl =
 	]=]--
 	Start: () -> ();
 	--[=[
-		Runs when Weaver is started.
+		Yields until Weaver has started.
+
+		If Weaver has already started, this will not yield.
 	]=]--
 	OnStart: () -> ();
 	--[=[
-		Gets a service.
+		If the `Name` is used for a service, returns the WeaverService from the server.
 
-		If `Service` exists, returns the `WeaverService` from the server.
+		This will throw an error if Weaver has not started, or if `Name` is not used for a service.
 	]=]--
 	GetService: (Name: string) -> WeaverService;
 	--[=[
-		Creates a service.
+		Creates and adds a service before Weaver has started. The WeaverMockService returned will be turned into a WeaverService once Weaver starts.
 
-		This method will only work before Weaver is started.
+		This will throw an error if Weaver has started.
 	]=]--
 	CreateService: (Service: WeaverServiceInit) -> WeaverMockService;
 	--[=[
 		Adds all services from `Handle` to Weaver automatically.
 
-		Returns an array of all of the added services.
+		Returns an array of all of the added WeaverServices.
 	]=]--
 	AddServices: (Handle: Instance) -> { WeaverService };
 	--[=[
-		Creates a remote signal.
+		Creates a remote signal marker which is turned into a RemoteSignal when Weaver is started.
+
+		This will only create a RemoteSignal if it is indexxed into the Client table.
 	]=]--
 	CreateRemoteSignal: () -> Helpers.Marker;
 	--[=[
-		Creates an unreliable remote signal.
+		Creates an unreliable signal marker which is turned into a RemoteSignal when Weaver is started. This is adjacent to Roblox's UnreliableRemoteEvent
+
+		This will only create a RemoteSignal if it is indexxed into the Client table.
 	]=]--
 	CreateUnreliableSignal: () -> Helpers.Marker;
 }
 -- Main
-Weaver.Util = Util
-return table.freeze(Weaver)
+WeaverServer.Util = Util
+return table.freeze(WeaverServer)
