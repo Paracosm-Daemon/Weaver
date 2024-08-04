@@ -33,7 +33,7 @@ type RemoteSignalImpl =
 	--[=[
 		Fires to all clients in the game.
 	]=]--
-	FireAll: (self: RemoteSignal, Client: Player, ...any) -> ();
+	FireAll: (self: RemoteSignal, ...any) -> ();
 	--[=[
 		Fires to all clients specified in `For`.
 	]=]--
