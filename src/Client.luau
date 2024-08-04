@@ -10,10 +10,7 @@
 ]=]--
 local Weaver: WeaverImpl = {} :: WeaverImpl
 -- Services
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-
-assert(RunService:IsClient(), "WeaverClient cannot be ran outside of the client!")
 -- Modules
 local Module = script.Parent
 

@@ -9,9 +9,6 @@
 	All of the logic here is for starting and handling services alongside the communication bridge with the client.
 ]=]--
 local Weaver: WeaverImpl = {} :: WeaverImpl
--- Services
-local RunService = game:GetService("RunService")
-assert(RunService:IsServer(), "WeaverServer cannot be ran outside of the server!")
 -- Modules
 local Module = script.Parent
 
