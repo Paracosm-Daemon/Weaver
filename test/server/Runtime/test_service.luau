@@ -2,7 +2,7 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Modules
-local Weaver = require(ReplicatedStorage.Weaver)
+local Weaver = require(ReplicatedStorage.Weaver.Server)
 -- Service
 local Module = Weaver.CreateService{ Name = script.Name }
 -- Variables
