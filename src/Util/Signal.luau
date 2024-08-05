@@ -35,6 +35,9 @@ type SignalImpl =
 	__tostring: (self: SignalImpl) -> string;
 	-- Methods
 	-- Public
+	--[=[
+		Constructs a new Signal object.
+	]=]--
 	new: () -> Signal;
 	--[=[
 		Fires the signal with the specified data.

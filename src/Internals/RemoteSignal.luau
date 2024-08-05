@@ -23,6 +23,9 @@ type RemoteSignalImpl =
 	__index: RemoteSignalImpl;
 	__tostring: (self: RemoteSignalImpl) -> string;
 	-- Methods
+	--[=[
+		Constructs a new RemoteSignal object.
+	]=]--
 	new: (Instance: SignalListener) -> RemoteSignal;
 	--[=[
 		On the client, fires to the server.
@@ -89,6 +92,12 @@ local Hash: { [Player]: number } = {}
 
 local Connected: number = 0
 -- Functions
+--[=[
+	Constructs a new RemoteSignal object.
+
+	@private
+	@return RemoteSignal
+]=]--
 function RemoteSignal.new(From: SignalListener): RemoteSignal
 	return table.freeze(setmetatable({
 		_Instance = From;
