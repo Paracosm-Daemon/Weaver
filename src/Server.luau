@@ -43,7 +43,7 @@ local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 	end;
 }
 -- Variables
-local Mockups: { [string]: WeaverService } = {}
+local Mockups: { [string]: WeaverMockService } = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
@@ -68,13 +68,15 @@ function WeaverServer.Start(): ()
 	local Communication: Folder = Instance.new("Folder")
 	Communication.Name = Paths.ORIGIN
 	-- Initialize the signals before parenting the Communication folder
-	for Name: string, Service: WeaverService in Mockups do
+	for Name: string, Mockup: WeaverMockService in Mockups do
+		local Service: WeaverService = Mockup :: WeaverService
 		local Client: WeaverExposed = {} :: WeaverExposed
-		local Network: Folder = Instance.new("Folder")
 
+		local Network: Folder = Instance.new("Folder")
 		Network.Name = Name
-		for Index: string, Value: any in Service.Client do
-			if typeof(Index) ~= "string" then
+
+		for Index: string, Value: any in Mockup.Client do
+			if (typeof(Index) ~= "string") or (Index == "Server") then
 				continue
 			end
 
@@ -102,11 +104,9 @@ function WeaverServer.Start(): ()
 				Client[Index] = Instantiate(tostring(Index), Network)
 				continue
 			end
-			if Type == "table" then
-				continue
-			end
-			-- Assume that this is an attribute if none of the other conditions are met
-			Network:SetAttribute(Index, Value)
+		end
+		for Attribute: string, Value: any in Mockup.Attributes do
+			Network:SetAttribute(Attribute, Value)
 		end
 
 		function Service:GetAttribute(Attribute: string): any
@@ -122,7 +122,6 @@ function WeaverServer.Start(): ()
 		function Service:SetAttribute(Attribute: string, Value: any): ()
 			Network:SetAttribute(Attribute, Value)
 		end
-
 		Service.AttributeChanged = Network.AttributeChanged
 
 		Client.Server = Service
@@ -133,6 +132,8 @@ function WeaverServer.Start(): ()
 		Services[Name] = Service :: WeaverService
 		Network.Parent = Communication
 	end
+	-- Clear the Mockups table, since it is now unused
+	Mockups = {}
 	table.freeze(Services)
 	-- Init
 	for _, Service: WeaverService in Services do
@@ -222,8 +223,9 @@ end
 	**This will throw an error if Weaver has started.**
 
 	@param Service { Attributes: { [string]: any }?, Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@return WeaverMockService
 ]=]--
-function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverService
+function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverMockService
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Name: string = Service.Name
@@ -232,9 +234,12 @@ function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverService
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 	assert(Mockups[Name] == nil, string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
 
-	local Created: WeaverService = Service :: WeaverService
+	local Created: WeaverMockService = Service :: WeaverMockService
 	if typeof(Created.Client) ~= "table" then
 		Created.Client = {} :: WeaverExposed
+	end
+	if typeof(Created.Attributes) ~= "table" then
+		Created.Attributes = {} :: WeaverAttributes
 	end
 
 	Mockups[Name] = Created
@@ -305,6 +310,18 @@ type WeaverServiceInit =
 	-- Variables
 	Attributes: WeaverAttributes?;
 	Client: WeaverMockExposed?;
+
+	Name: string;
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
+}
+type WeaverMockService =
+{
+	-- Variables
+	Attributes: WeaverAttributes;
+	Client: WeaverMockExposed;
 
 	Name: string;
 	[any]: any;
