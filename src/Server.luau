@@ -13,7 +13,7 @@ local WeaverServer: WeaverImpl = {} :: WeaverImpl
 local Module = script.Parent
 
 local Internals = Module.Internals
-local Util = Module.Util
+local Util = require(Module.Util)
 
 local RemoteSignal = require(Internals.RemoteSignal)
 local Exceptions = require(Internals.Exceptions)
@@ -43,7 +43,7 @@ local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 	end;
 }
 -- Variables
-local Mockups: { [string]: WeaverMockService } = {}
+local Mockups: { [string]: WeaverService } = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
@@ -67,9 +67,9 @@ function WeaverServer.Start(): ()
 	-- Networking
 	local Communication: Folder = Instance.new("Folder")
 	Communication.Name = Paths.ORIGIN
-
-	for Name: string, Service: WeaverMockService in Mockups do
-		local Client: WeaverService = {} :: WeaverService
+	-- Initialize the signals before parenting the Communication folder
+	for Name: string, Service: WeaverService in Mockups do
+		local Client: WeaverExposed = {} :: WeaverExposed
 		local Network: Folder = Instance.new("Folder")
 
 		Network.Name = Name
@@ -79,6 +79,7 @@ function WeaverServer.Start(): ()
 			end
 
 			local Type: string = typeof(Value)
+			-- Functions are declared as RemoteFunctions in the CLient table
 			if Type == "function" then
 				local Signal: RemoteFunction = Instance.new("RemoteFunction")
 				Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
@@ -91,6 +92,7 @@ function WeaverServer.Start(): ()
 				Client[Index] = Value
 				continue
 			end
+			-- Type userdata means that this is a newproxy(), and possibly a marker
 			if Type == "userdata" then
 				local Instantiate: MarkerMethod? = MARKINGS[Value]
 				if not Instantiate then
@@ -100,10 +102,29 @@ function WeaverServer.Start(): ()
 				Client[Index] = Instantiate(tostring(Index), Network)
 				continue
 			end
+			if Type == "table" then
+				continue
+			end
+			-- Assume that this is an attribute if none of the other conditions are met
+			Network:SetAttribute(Index, Value)
 		end
+
+		function Service:GetAttribute(Attribute: string): any
+			return Network:GetAttribute(Attribute)
+		end
+		function Service:GetAttributeChangedSignal(Attribute: string): RBXScriptSignal
+			return Network:GetAttributeChangedSignal(Attribute)
+		end
+
+		function Service:SetAttribute(Attribute: string, Value: any): ()
+			Network:SetAttribute(Attribute, Value)
+		end
+		Service.AttributeChanged = Network.AttributeChanged
 
 		Client.Server = Service
 		Service.Client = Client
+
+		table.freeze(Client)
 
 		Services[Name] = Service :: WeaverService
 		Network.Parent = Communication
@@ -144,10 +165,10 @@ function WeaverServer.Start(): ()
 			Start(Service)
 		end)
 	end
-
+	-- Once the services are started, parent the Communication folder to the tree
 	Communication.Parent = Paths.TREE
 	Running = true
-
+	-- Then, unpause any threads that are waiting OnStart
 	if Waiting ~= 0 then
 		for Index: number = 1, Waiting, 1 do
 			local Thread: thread = Queue[Index]
@@ -192,13 +213,13 @@ function WeaverServer.GetService(Name: string): WeaverService
 	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
 --[=[
-	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started. The WeaverMockService returned will be used to create a [WeaverService](WeaverServer#WeaverService) once Weaver starts.
+	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started.
 
 	**This will throw an error if Weaver has started.**
 
-	@param Service { Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@param Service { Attributes: { [string]: any }?, Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
 ]=]--
-function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverMockService
+function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverService
 	assert(not Started, string.format(Exceptions.EXCEPTION_BEFORE_START, "Services"))
 
 	local Name: string = Service.Name
@@ -207,9 +228,9 @@ function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverMockServi
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 	assert(Mockups[Name] == nil, string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
 
-	local Created: WeaverMockService = Service :: WeaverMockService
+	local Created: WeaverService = Service :: WeaverService
 	if typeof(Created.Client) ~= "table" then
-		Created.Client = {}
+		Created.Client = {} :: WeaverExposed
 	end
 
 	Mockups[Name] = Created
@@ -237,10 +258,8 @@ function WeaverServer.AddServices(Handle: Instance): { WeaverService }
 			continue
 		end
 
-		local Service: WeaverService = require(Child) :: WeaverService
-
 		Index += 1
-		Added[Index] = Service
+		Added[Index] = require(Child) :: WeaverService
 	end
 	return Added
 end
@@ -266,6 +285,7 @@ function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 end
 -- Types
 type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
+type WeaverAttributes = { [string]: any }
 --[=[
 	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
 	@within WeaverServer
@@ -279,20 +299,10 @@ type WeaverMockExposed =
 type WeaverServiceInit =
 {
 	-- Variables
+	Attributes: WeaverAttributes?;
 	Client: WeaverMockExposed?;
-	Name: string;
 
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
-}
-type WeaverMockService =
-{
-	-- Variables
-	Client: WeaverMockExposed;
 	Name: string;
-
 	[any]: any;
 	-- Methods
 	WeaverStart: (self: WeaverService) -> ()?;
@@ -301,28 +311,35 @@ type WeaverMockService =
 --[=[
 	The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.
 
-	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal & WeaverMethod }
+	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }
 	@within WeaverServer
 ]=]--
 export type WeaverExposed =
 {
 	Server: WeaverService;
-	[string]: RemoteSignal.RemoteSignal & WeaverMethod;
+	[string]: any;
 }
 --[=[
 	The type used for all services on the server.
 
-	@type WeaverService { Client: { Server: WeaverService, [string]: RemoteSignal & WeaverMethod }, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@type WeaverService { AttributeChanged: RBXScriptSignal, Client: WeaverExposed, Name: string, [any]: any, GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal, GetAttribute: (self: WeaverService, Attribute: string) -> any, SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> (), WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
 	@within WeaverServer
 ]=]--
 export type WeaverService =
 {
 	-- Variables
+	AttributeChanged: RBXScriptSignal;
+
 	Client: WeaverExposed;
 	Name: string;
 
 	[any]: any;
 	-- Methods
+	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+
+	SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> ();
+
 	WeaverStart: (self: WeaverService) -> ()?;
 	WeaverInit: (self: WeaverService) -> ()?;
 }
@@ -351,11 +368,11 @@ export type WeaverImpl =
 	]=]--
 	GetService: (Name: string) -> WeaverService;
 	--[=[
-		Creates and adds a service before Weaver has started. The WeaverMockService returned will be turned into a WeaverService once Weaver starts.
+		Creates and adds a service before Weaver has started. The WeaverService returned will be turned into a WeaverService once Weaver starts.
 
 		This will throw an error if Weaver has started.
 	]=]--
-	CreateService: (Service: WeaverServiceInit) -> WeaverMockService;
+	CreateService: (Service: WeaverServiceInit) -> WeaverService;
 	--[=[
 		Adds all services from `Handle` to Weaver automatically.
 

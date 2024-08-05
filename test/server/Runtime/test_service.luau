@@ -7,6 +7,7 @@ local Weaver = require(ReplicatedStorage.Weaver)
 local Module = Weaver.CreateService{ Name = script.Name }
 -- Variables
 Module.Client.Remote = Weaver.CreateRemoteSignal()
+Module.Client.hi = 123
 -- Functions
 -- Client
 function Module.Client:Frobulate(Client: Player, Frobulations: number): number
@@ -20,17 +21,20 @@ end
 
 function Module:WeaverInit(): ()
 	print("foo")
-	self.Client.Remote:Connect(function(Client: Player, Input: string): ()
+	local Remote: Weaver.RemoteSignal = self.Client.Remote
+	Remote:Connect(function(Client: Player, Input: string): ()
 		warn(Client, "input", Input)
-		self.Client.Remote:Fire(Client, "quuz")
+		Remote:Fire(Client, "quuz")
 
-		self.Client.Remote:FireAll("FireAll")
-		self.Client.Remote:FireFor({ Client }, "FireFor")
-		self.Client.Remote:FireExcept({ Client }, "FireExcept")
+		Remote:FireAll("FireAll")
+		Remote:FireFor({ Client }, "FireFor")
+		Remote:FireExcept({ Client }, "FireExcept")
 	end)
 end
 function Module:WeaverStart(): ()
 	print("bar")
+
+
 end
 -- Main
 return Module

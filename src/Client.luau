@@ -15,7 +15,7 @@ local Players = game:GetService("Players")
 local Module = script.Parent
 
 local Internals = Module.Internals
-local Util = Module.Util
+local Util = require(Module.Util)
 
 local RemoteSignal = require(Internals.RemoteSignal)
 local Exceptions = require(Internals.Exceptions)
@@ -193,7 +193,7 @@ function WeaverClient.GetService(Name: string): WeaverService
 		end)
 	end
 
-	local Service: WeaverService = {}
+	local Service: WeaverService = {} :: WeaverService
 	for _, Child: Instance in Path:GetChildren() do
 		if Child:IsA("RemoteEvent") or Child:IsA("UnreliableRemoteEvent") then
 			Service[Child.Name] = RemoteSignal.new(Child :: RemoteSignal.SignalListener)
@@ -206,8 +206,17 @@ function WeaverClient.GetService(Name: string): WeaverService
 			continue
 		end
 	end
+	-- Define only GetAttribute/GetAttributeChangedSignal
+	function Service:GetAttribute(Attribute: string): any
+		return Path:GetAttribute(Attribute)
+	end
+	function Service:GetAttributeChangedSignal(Attribute: string): RBXScriptSignal
+		return Path:GetAttributeChangedSignal(Attribute)
+	end
 
+	Service.AttributeChanged = Path.AttributeChanged
 	Services[Name] = Service
+
 	for _, Thread: thread in Yielding do
 		task.spawn(Thread, Service)
 	end
@@ -285,10 +294,19 @@ end
 --[=[
 	The type used for all services on the client.
 
-	@type WeaverService { [string]: RemoteSignal | (self: WeaverService, ...any) -> (...any) }
+	@type WeaverService { AttributeChanged: RBXScriptSignal, GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal, GetAttribute: (self: WeaverService, Attribute: string) -> any, [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any) }
 	@within WeaverClient
 ]=]--
-export type WeaverService = { [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any) }
+export type WeaverService =
+{
+	-- Variables
+	AttributeChanged: RBXScriptSignal;
+	-- Methods
+	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+
+	[string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any);
+}
 --[=[
 	The type used for all controllers.
 

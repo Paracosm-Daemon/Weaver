@@ -4,19 +4,23 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Modules
 local Weaver = require(ReplicatedStorage.Weaver)
 -- https://github.com/luau-lang/luau/issues/1357
-local Signal = require(ReplicatedStorage.Weaver.Util.Signal)
+local Signal = Weaver.Util.Signal
 -- Service
 local Module = Weaver.CreateController{ Name = script.Name }
 Module.Test = Signal.new()
 -- Functions
 function Module:WeaverInit(): ()
 	print("baz")
-	local Thing: Signal.SignalConnection = self.Test:Connect(function(Input: string): ()
+
+	local Thing: Weaver.SignalConnection
+	Thing = self.Test:Connect(function(Input: string): ()
 		warn(Input)
+		Thing:Disconnect()
+		task.wait(1)
+		print(Thing.Connected)
 	end)
 	self.Test:Once(function(Input: string): ()
 		print("ONCE CLIENT", Input)
-		Thing:Disconnect()
 	end)
 	task.spawn(function(): ()
 		print("WAIT CLIENT", self.Test:Wait())
@@ -26,6 +30,8 @@ function Module:WeaverStart(): ()
 	print("qux")
 
 	local TestService = Weaver.GetService("test_service")
+	print(TestService:GetAttribute("hi"))
+
 	TestService.Remote:Connect(function(Output: string): ()
 		print("Server output", Output)
 
