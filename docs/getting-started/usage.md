@@ -63,20 +63,19 @@ Let's say that we want to use a [RemoteEvent](https://create.roblox.com/docs/ref
 
 ```lua
 local MessagingService = game:GetService("MessagingService")
-
+-- This will be the topic we post to
 local POST_TOPIC: string = "GlobalMessages"
-
-local PostService = Weaver.CreateService("PostService")
--- First, create the remote signal.
+-- First, create PostService
+local PostService = Weaver.CreateService{ Name = "PostService" }
+-- Then, create the remote signal.
 -- Trying to use it before Weaver has started will throw an exception
 PostService.Client.SendMessage = Weaver.CreateRemoteSignal()
 function PostService:WeaverInit(): ()
-	-- First, subscribe to POST_TOPIC
+	-- We subscribe to POST_TOPIC in WeaverInit alongside SendMessage so it can be used on WeaverStart
 	MessagingService:SubscribeAsync(POST_TOPIC, function(Message: { Payload: { Name: string, Message: string }, Sent: number }): ()
 		print("Player", Payload.Name, "sent", Payload.Message)
 	end)
-	-- Then, connect SendMessage inside of WeaverInit, so it's to be used on WeaverStart.
-	-- It will take a Message string
+	-- SendMessage will take a string
 	self.Client.SendMessage:Connect(function(Client: Player, Message: string): ()
 		-- Normally, you'd want to add sanity checks, but this is just an example
 		MessagingService:PublishAsync(POST_TOPIC, {
