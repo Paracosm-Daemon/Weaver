@@ -58,6 +58,8 @@ local Started: boolean = false
 	Starts Weaver.
 
 	**This will throw an error if Weaver is already started.**
+
+	@yields
 ]=]--
 function WeaverServer.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
@@ -122,7 +124,9 @@ function WeaverServer.Start(): ()
 		function Service:SetAttribute(Attribute: string, Value: any): ()
 			Network:SetAttribute(Attribute, Value)
 		end
+
 		Service.AttributeChanged = Network.AttributeChanged
+		Service.Attributes = nil
 
 		Client.Server = Service
 		Service.Client = Client
@@ -185,7 +189,7 @@ function WeaverServer.Start(): ()
 	end
 end
 --[=[
-	Yields until Weaver has started.
+	Yields until Weaver has started. Useful for external modules that are not ran as services.
 
 	If Weaver has already started, this will not yield.
 

@@ -72,6 +72,8 @@ end
 	Starts Weaver.
 
 	**This will throw an error if Weaver is already started.**
+
+	@yields
 ]=]--
 function WeaverClient.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
@@ -126,7 +128,7 @@ function WeaverClient.Start(): ()
 	end
 end
 --[=[
-	Yields until Weaver has started.
+	Yields until Weaver has started. Useful for external modules that are not ran as controllers.
 
 	If Weaver has already started, this will not yield.
 
