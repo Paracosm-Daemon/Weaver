@@ -8,7 +8,7 @@
 
 	All of the logic here is for starting and handling controllers alongside the communication bridge with the server.
 ]=]--
-local WeaverClient: WeaverImpl = {} :: WeaverImpl
+local WeaverClient = {}
 -- Services
 local Players = game:GetService("Players")
 -- Modules
@@ -329,50 +329,6 @@ export type WeaverController =
 	-- Methods
 	WeaverStart: (self: WeaverController) -> ()?;
 	WeaverInit: (self: WeaverController) -> ()?;
-}
-
-export type WeaverImpl =
-{
-	-- Variables
-	Util: typeof(Util);
-	Client: Player;
-	-- Methods
-	--[=[
-		Starts Weaver.
-
-		This will throw an error if Weaver is already started.
-	]=]--
-	Start: () -> ();
-	--[=[
-		Yields until Weaver has started.
-
-		If Weaver has already started, this will not yield.
-	]=]--
-	OnStart: () -> ();
-	--[=[
-		Returns the WeaverService found from the server.
-
-		This will yield until a service matching the name is found.
-	]=]--
-	GetService: (Name: string) -> WeaverService;
-	--[=[
-		If the `Name` is used for a controller, returns the WeaverController from the server.
-
-		This will throw an error if Weaver has not started, or if `Name` is not used for a controller.
-	]=]--
-	GetController: (Name: string) -> WeaverController;
-	--[=[
-		Creates and adds a controller before Weaver has started.
-
-		This will throw an error if Weaver has started.
-	]=]--
-	CreateController: (Controller: WeaverController) -> WeaverController;
-	--[=[
-		Adds all services from Handle to Weaver automatically.
-
-		Returns an array of all of the added WeaverControllers.
-	]=]--
-	AddControllers: (Handle: Instance) -> { WeaverController };
 }
 -- Main
 WeaverClient.Client = Players.LocalPlayer

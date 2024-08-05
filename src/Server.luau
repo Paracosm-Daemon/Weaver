@@ -8,7 +8,7 @@
 
 	All of the logic here is for starting and handling services alongside the communication bridge with the client.
 ]=]--
-local WeaverServer: WeaverImpl = {} :: WeaverImpl
+local WeaverServer = {}
 -- Modules
 local Module = script.Parent
 
@@ -369,55 +369,6 @@ export type WeaverService =
 
 	WeaverStart: (self: WeaverService) -> ()?;
 	WeaverInit: (self: WeaverService) -> ()?;
-}
-
-export type WeaverImpl =
-{
-	-- Variables
-	Util: typeof(Util);
-	-- Methods
-	--[=[
-		Starts Weaver.
-
-		This will throw an error if Weaver is already started.
-	]=]--
-	Start: () -> ();
-	--[=[
-		Yields until Weaver has started.
-
-		If Weaver has already started, this will not yield.
-	]=]--
-	OnStart: () -> ();
-	--[=[
-		If the `Name` is used for a service, returns the WeaverService from the server.
-
-		This will throw an error if Weaver has not started, or if `Name` is not used for a service.
-	]=]--
-	GetService: (Name: string) -> WeaverService;
-	--[=[
-		Creates and adds a service before Weaver has started. The WeaverService returned will be turned into a WeaverService once Weaver starts.
-
-		This will throw an error if Weaver has started.
-	]=]--
-	CreateService: (Service: WeaverServiceInit) -> WeaverService;
-	--[=[
-		Adds all services from `Handle` to Weaver automatically.
-
-		Returns an array of all of the added WeaverServices.
-	]=]--
-	AddServices: (Handle: Instance) -> { WeaverService };
-	--[=[
-		Creates a remote signal marker which is turned into a RemoteSignal when Weaver is started.
-
-		This will only create a RemoteSignal if it is indexxed into the Client table.
-	]=]--
-	CreateRemoteSignal: () -> Helpers.Marker;
-	--[=[
-		Creates an unreliable signal marker which is turned into a RemoteSignal when Weaver is started. This is adjacent to Roblox's UnreliableRemoteEvent
-
-		This will only create a RemoteSignal if it is indexxed into the Client table.
-	]=]--
-	CreateUnreliableSignal: () -> Helpers.Marker;
 }
 -- Main
 WeaverServer.Util = Util

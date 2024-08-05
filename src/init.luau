@@ -16,4 +16,4 @@ export type Signal = Signal.Signal
 
 export type RemoteSignal = RemoteSignal.RemoteSignal
 -- Main
-return (if RunService:IsServer() then WeaverServer else WeaverClient) :: (WeaverServer.WeaverImpl & WeaverClient.WeaverImpl)
+return (if RunService:IsServer() then WeaverServer else WeaverClient) :: typeof(WeaverServer) & typeof(WeaverClient)
