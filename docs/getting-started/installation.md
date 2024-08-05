@@ -14,7 +14,7 @@ Since Weaver is available as a package for Wally, you are able to install it by 
 
 `Weaver = "paracosm-daemon/weaver@^0.0.1"`
 
-**This is the recommended method to install Weaver.** If you would like to use Wally, you can [learn more here](https://github.com/UpliftGames/wally).
+**This is the recommended method to install Weaver**. If you would like to use Wally, you can [learn more here](https://github.com/UpliftGames/wally).
 
 ### Method 2 - Roblox Creator Store
 
