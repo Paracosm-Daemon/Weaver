@@ -14,7 +14,7 @@ Weaver.Start() -- Hooray, Weaver has started!
 
 That is the _bare minimum_ that Weaver needs to run. However, this does not load any [WeaverServices](/api/WeaverServer#WeaverService) or [WeaverControllers](/api/WeaverClient#WeaverController). To do so, we need to create them.
 
-Let's create a service on the server. It can be anything, but for this example, a simple "ping" service can work. Let's say that we want it to communicate with the client to play ping-pong. When a service is created via [`WeaverServer.CreateService()`](/api/WeaverService#CreateService), it will always have a Client table. There is more detail on how [`WeaverServices`](/api/WeaverServer#WeaverService) work in the [Communication tab](../communication/services).
+Let's create a service on the server. It can be anything, but for this example, a simple "ping" service can work. Let's say that we want it to communicate with the client to play ping-pong. When a service is created via [`WeaverServer.CreateService()`](/api/WeaverService#CreateService), it will always have a Client table. There is more detail on how [`WeaverServices`](/api/WeaverServer#WeaverService) work in the [Communication page](/docs/communication/services).
 
 ## Methods
 
@@ -59,7 +59,7 @@ Just like that, we've created a service to play ping-pong with. Under the hood, 
 
 ![Ping in the Explorer tree](/usage-ping.png)
 
-## Signals
+## RemoteSignals
 
 Let's say that we want to use a [RemoteEvent](https://create.roblox.com/docs/reference/engine/classes/RemoteEvent) instead, and in this case, for posting a message via [MessagingService](https://create.roblox.com/docs/reference/engine/classes/MessagingService). We can use [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal) to create a signal which will be listened to on the client. In practice, the server would look something like this:
 
@@ -109,4 +109,4 @@ local PostService = Weaver.GetService("PostService")
 PostService.SendMessage:Fire("Hello from the client!") -- That's all!
 ```
 
-More information on communication can be found on the [next page](/docs/communication/services).
+More information on communication can be found on the [Communications page](/docs/communication/services).
