@@ -206,10 +206,14 @@ function WeaverClient.GetService(Name: string): WeaverService
 			continue
 		end
 	end
-	-- Define only GetAttribute/GetAttributeChangedSignal
+	-- Define only GetAttribute(s)/GetAttributeChangedSignal
 	function Service:GetAttribute(Attribute: string): any
 		return Path:GetAttribute(Attribute)
 	end
+	function Service:GetAttributes(): { [string]: any }
+		return Path:GetAttributes()
+	end
+
 	function Service:GetAttributeChangedSignal(Attribute: string): RBXScriptSignal
 		return Path:GetAttributeChangedSignal(Attribute)
 	end
@@ -303,7 +307,9 @@ export type WeaverService =
 	AttributeChanged: RBXScriptSignal;
 	-- Methods
 	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+
 	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+	GetAttributes: (self: WeaverService) -> { [string]: any };
 
 	[string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any);
 }

@@ -112,13 +112,17 @@ function WeaverServer.Start(): ()
 		function Service:GetAttribute(Attribute: string): any
 			return Network:GetAttribute(Attribute)
 		end
+		function Service:GetAttributes(): { [string]: any }
+			return Network:GetAttributes()
+		end
+
 		function Service:GetAttributeChangedSignal(Attribute: string): RBXScriptSignal
 			return Network:GetAttributeChangedSignal(Attribute)
 		end
-
 		function Service:SetAttribute(Attribute: string, Value: any): ()
 			Network:SetAttribute(Attribute, Value)
 		end
+
 		Service.AttributeChanged = Network.AttributeChanged
 
 		Client.Server = Service
@@ -336,7 +340,9 @@ export type WeaverService =
 	[any]: any;
 	-- Methods
 	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+
 	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+	GetAttributes: (self: WeaverService) -> { [string]: any };
 
 	SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> ();
 
