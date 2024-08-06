@@ -430,6 +430,12 @@ end
 --[=[
 	Creates a [RemoteProperty] with a value of `nil` when Weaver has started. If you would like to create a [RemoteProperty] with a value, set your property in your `Client` table to any value, i.e `Service.Client.Property = 0`
 
+	:::caution
+
+	This will only create a [RemoteProperty] if it is indexxed into the Client table.
+
+	:::
+
 	@return Marker
 ]=]--
 function WeaverServer.CreateEmptyProperty(): Helpers.None
