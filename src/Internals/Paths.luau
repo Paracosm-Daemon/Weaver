@@ -1,8 +1,8 @@
 --!strict
 return table.freeze{
 	TREE = game:GetService("ReplicatedStorage");
-	ORIGIN = "__WInternal";
+	ORIGIN = "$__WInternal";
 
-	PROPERTIES = ".Props";
-	SIGNALS = ".Signals";
+	PROPERTIES = "$Props";
+	SIGNALS = "$Signals";
 }
