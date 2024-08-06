@@ -28,7 +28,7 @@ if RunService:IsServer() then
 		-- Shifting operation
 		if Clients.Connected == 1 then
 			Clients.Connected = 0
-			Clients.Array = {}
+			table.clear(Clients.Array)
 
 			return
 		end

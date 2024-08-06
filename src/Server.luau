@@ -137,7 +137,7 @@ local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 	end;
 }
 -- Variables
-local Mockups: { [string]: WeaverMockService } = {}
+local Mockups: { [string]: WeaverMockService }? = {}
 local Services: { [string]: WeaverService } = {}
 
 local Queue: { thread } = {}
@@ -161,6 +161,7 @@ local Started: boolean = false
 ]=]--
 function WeaverServer.Start(): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
+	assert(Mockups, Exceptions.EXCEPTION_CANT_START)
 
 	Started = true
 	table.freeze(Mockups)
@@ -251,7 +252,7 @@ function WeaverServer.Start(): ()
 		Network.Parent = Communication
 	end
 	-- Clear the Mockups table, since it is now unused
-	Mockups = {}
+	Mockups = nil
 	table.freeze(Services)
 	-- Init
 	for _, Service: WeaverService in Services do
@@ -358,7 +359,7 @@ function WeaverServer.CreateService(Service: WeaverServiceInit): WeaverMockServi
 	local Type: string = type(Name)
 
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
-	assert(Mockups[Name] == nil, string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
+	assert(Mockups and (Mockups[Name] == nil), string.format(Exceptions.EXCEPTION_EXISTS_AS, "Service", Name))
 
 	local Created: WeaverMockService = Service :: WeaverMockService
 	if typeof(Created.Client) ~= "table" then

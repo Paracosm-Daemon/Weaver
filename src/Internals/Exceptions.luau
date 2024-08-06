@@ -6,6 +6,8 @@ return table.freeze{
 	EXCEPTION_DOES_NOT_EXIST = "%s %s does not exist";
 	EXCEPTION_EXISTS_AS = "%s %s already exists";
 
+	EXCEPTION_CANT_START = "Failed to start Weaver due to an internal error";
+
 	EXCEPTION_NEED_USE_START = "Weaver must be started to use %s";
 	EXCEPTION_HAS_STARTED = "Weaver has already started";
 }
