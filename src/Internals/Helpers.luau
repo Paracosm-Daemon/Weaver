@@ -14,5 +14,6 @@ function Helpers.CreateMarker(Name: string): Marker
 end
 -- Types
 export type Marker = typeof(newproxy(false))
+export type None = typeof(Helpers.NONE)
 -- Main
 return table.freeze(Helpers)
