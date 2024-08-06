@@ -15,6 +15,7 @@ includeReadme = false
 [docusaurus]
 url = "https://paracosm-daemon.github.io"
 baseUrl = "/Weaver"
+title = "Weaver"
 tagline = "A fast, lightweight game framework for Roblox"
 
 [footer]

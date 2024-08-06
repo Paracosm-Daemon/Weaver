@@ -54,7 +54,7 @@ local Service = Weaver.CreateService{
 
 ## Signals
 
-Let's say that we don't want to expose signals to the client, rather, we want to have an event that other services can listen to, like a [BindableEvent](https://create.roblox.com/docs/reference/engine/classes/BindableEvent). Weaver implements this through it's built-in class: [Signal](/api/Signal). You are able to create a Signal by using the module via `Weaver.Util.Signal`. Unlike [RemoteSignals](/api/RemoteSignal), these are available as soon as you create them via [`Signal.new()`](/api/Signal#new).
+Let's say that we don't want to expose signals to the client, rather, we want to have an event that other services can listen to, like a [BindableEvent](https://create.roblox.com/docs/reference/engine/classes/BindableEvent). Weaver implements this through it's built-in class: [Signal](/api/Signal). You are able to create a Signal by using the module located at `Weaver.Util.Signal`. Unlike [RemoteSignals](/api/RemoteSignal), these are available as soon as you create them via [`Signal.new()`](/api/Signal#new).
 
 First, we create our service, which handles our signal:
 
@@ -64,12 +64,12 @@ local Signal = Weaver.Util.Signal -- Util is a module, and Signal is already req
 
 local EventFiringService = Weaver.CreateService{
 	Name = "EventFiringService";
-	OnSomething = Signal.new();
+	SomethingHappened = Signal.new();
 }
 function EventFiringService:WeaverStart(): ()
-	-- Fire OnSomething in WeaverStart,
+	-- Fire SomethingHappened in WeaverStart,
 	-- as the connections from other services should be ready
-	self.OnSomething:Fire()
+	self.SomethingHappened:Fire()
 end
 ```
 
@@ -81,7 +81,7 @@ function EventHandlingService:WeaverInit(): ()
 	-- First, we get the service
 	local EventFiringService = Weaver.GetService("EventFiringService")
 	-- Then, we connect an event to it
-	EventFiringService.OnSomething:Connect(function(): ()
+	EventFiringService.SomethingHappened:Connect(function(): ()
 		print("Something happened!")
 	end)
 end
@@ -92,6 +92,16 @@ end
 Trying to add [Signals](/api/signal) to [`WeaverService.Client`](/api/WeaverServer#WeaverService) will not work. The signal will still exist, but it will not be accessible from `Client` once Weaver starts, as it cannot be exposed to the client.
 
 :::
+
+## Properties
+
+Weaver also has support for [RemoteProperties](/api/RemoteProperty). These are properties which are set by the server, and passed to the client. These properties are also able to be different for every client, while still having a default value. This is great for services which may handle points or currency. As an example, here is a basic points service:
+
+```lua
+local PointsService = Weaver.CreateService{ Name = "PointsService" }
+PointsService.Client.Points = 0 -- This will initialize as a RemoteProperty once Weaver is initialized
+
+```
 
 ## Initialization
 
@@ -126,7 +136,7 @@ end
 -- Start Service
 ```
 
-As seen above, WeaverInit will always be called before WeaverStart. This goes for all services that you create for your [WeaverServer](/api/WeaverServer#CreateService). The best practice is to connect handlers for [Signals](/api/Signal), [RemoteSignals](/api/RemoteSignal), or other [RBXScriptSignals](https://create.roblox.com/docs/reference/engine/datatypes/RBXScriptSignal) in WeaverInit, and then execute functions or handle things that update based on the task scheduler i.e [RunService.PostSimulation](https://create.roblox.com/docs/reference/engine/classes/RunService#PostSimulation) in WeaverStart. This helps to prevent race conditions from occuring, where you may fire a signal before its handler is connected.
+As seen above, WeaverInit will always be called before WeaverStart. This goes for all services that you create for your [WeaverServer](/api/WeaverServer#CreateService). The best practice is to connect handlers for [Signals](/api/Signal), [RemoteSignals](/api/RemoteSignal), or other [RBXScriptSignals](https://create.roblox.com/docs/reference/engine/datatypes/RBXScriptSignal) in WeaverInit, and then execute functions or handle things that update based on the task scheduler — i.e [RunService.PostSimulation](https://create.roblox.com/docs/reference/engine/classes/RunService#PostSimulation) — in WeaverStart. This helps to prevent race conditions from occuring, where you may fire a signal before its handler is connected.
 
 Note that anything outside of the `Client` table is not exposed to any clients. This is to guarantee safety as you can control what clients are able to access. Usually, for formatting purposes, you may also want to define `Client` outside of [`WeaverServer.CreateService()`](/api/WeaverServer#CreateService).
 
@@ -134,16 +144,26 @@ Note that anything outside of the `Client` table is not exposed to any clients. 
 local Service = Weaver.CreateService{ Name = "Service" }
 Service.Client.SomeSignal = Weaver.CreateRemoteSignal()
 
-function Service.Client:AddNumber(value: number): number
-	return value + 2
+function Service.Client:IncrementNumber(value: number): number
+	return value + 1
 end
+```
+
+If you have ModuleScripts for every [WeaverService](/api/WeaverServer#WeaverService), you are also able to use [`WeaverServer.AddServices()`](/api/WeaverServer#AddServices) to add all of your services in bulk. This makes it easy to load all of your services at once, and it's especially useful if all of your services are in one location.
+
+```lua
+local Weaver = require(Weaver)
+
+Weaver.AddServices(script.Runtime) -- Just an example of a directory to store your services in
+Weaver.Start()
 ```
 
 ## Caveats
 
 When you first create a Weaver service, a few things will not be available:
 
-* [`WeaverService.Client`](/api/WeaverServer#WeaverService) will not be initialized until Weaver is started, meaning all [RemoteSignals](/api/RemoteSignal) will still be markers. Ditto for `Client.Server`, which is used to access the `Server` table from methods within the `Client` table.
+* [`WeaverService.Client`](/api/WeaverServer#WeaverService) will not be initialized until Weaver is started, meaning all [RemoteSignals](/api/RemoteSignal) will still be markers, and all [RemoteProperties](/api/RemoteProperty) will only be the values that you put in the `Client` table.
+* `Client.Server`, which is used to access the `Server` table from methods within the `Client` table, will also not be initialized until Weaver has started.
 * All of `WeaverService`'s attribute methods will be unavailable, as Weaver needs to start to initialize the service, which then internally sets the attributes and exposes the functions.
 
 See Weaver's [execution model](/docs/extras/execution-model) to understand how services are initialized.

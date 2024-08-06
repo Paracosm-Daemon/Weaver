@@ -16,7 +16,7 @@ Since Weaver is available as a package for Wally, you are able to install it by 
 
 If you would like to use Wally, you can [learn more here](https://github.com/UpliftGames/wally).
 
-:::info
+:::info Recommended
 
 This is the recommended method to install Weaver.
 
