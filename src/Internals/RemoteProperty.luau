@@ -220,11 +220,12 @@ if IS_SERVER then
 		@server
 	]=]--
 	function RemoteProperty:SetFor(For: Player, Value: any?): ()
-		if self:GetFor(For) == Value then
+		local New: any = if Value == nil then Helpers.NONE else Value
+		if self._Values[For] == New then
 			return
 		end
 
-		self._Values[For] = if Value == nil then Helpers.NONE else Value
+		self._Values[For] = New
 		self._Instance:FireClient(For, Value)
 	end
 	--[=[
@@ -356,7 +357,7 @@ else
 		if (self._Default == nil) and self._Threads and self._Waiting then
 			self._Waiting += 1
 			self._Threads[self._Waiting] = coroutine.running()
-
+			-- The resulting value will always return from this yield
 			return coroutine.yield()
 		end
 		return GetValue(self._Default)
