@@ -283,6 +283,9 @@ if IS_SERVER then
 		@server
 	]=]--
 	function RemoteProperty:ClearFor(For: Player): ()
+		local Type: string = typeof(For)
+		assert((Type == "Instance") and For:IsA("Player"), string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "For", "Player", `type { Type } with value { tostring(For) }`))
+
 		local Last: any? = self:GetFor(For)
 		self._Values[For] = nil
 
