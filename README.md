@@ -2,7 +2,7 @@
 
 Weaver is a fast, lightweight game framework meant for simple yet seamless game networking and synchronization. Weaver adheres by a single-script architecture, with a setup for the creation of services and controllers, allowing quick and painless communication from script-to-script without the need of BindableEvents/Functions.
 
-This was originally developed as a replacement for [Knit](https://github.com/Sleitnick/Knit), but without the use of external libraries; there are no promises or extra packages to install, as all libraries are embedded and created for Weaver.
+This was originally developed as an alternative to [Knit](https://github.com/Sleitnick/Knit), but without the use of external libraries; there are no promises or extra packages to install, as all libraries are embedded and created for Weaver.
 
 All code is written in Luau and up-to-date with the latest technology in Roblox, including typechecking.
 
