@@ -197,11 +197,16 @@ function WeaverClient.GetService(Name: string): WeaverService
 			if not Connection.Connected then
 				return
 			end
-			if Child:IsA("Folder") and (Child.Name == Name) then
+			if Child:IsA("Folder") and (Child.Name == Name) and not Path then
+				Path = Child
 				Connection:Disconnect()
+
 				task.spawn(Thread)
 			end
 		end)
+		if not Path then
+			coroutine.yield()
+		end
 	end
 	-- These are safe if the WeaverService was constructed properly
 	local Props: Folder = Path[Paths.PROPERTIES]
