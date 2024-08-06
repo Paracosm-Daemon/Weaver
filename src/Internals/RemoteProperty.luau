@@ -354,7 +354,9 @@ else
 		@client
 	]=]--
 	function RemoteProperty:Get(): any?
-		if (self._Default == nil) and self._Threads and self._Waiting then
+		if self._Default == nil then
+			assert(self._Threads and self._Waiting, "RemoteProperty was initialized incorrectly!")
+
 			self._Waiting += 1
 			self._Threads[self._Waiting] = coroutine.running()
 			-- The resulting value will always return from this yield
