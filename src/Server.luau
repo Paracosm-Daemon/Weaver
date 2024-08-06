@@ -15,7 +15,9 @@ local Module = script.Parent
 local Internals = Module.Internals
 local Util = require(Module.Util)
 
+local RemoteProperty = require(Internals.RemoteProperty)
 local RemoteSignal = require(Internals.RemoteSignal)
+
 local Exceptions = require(Internals.Exceptions)
 local Helpers = require(Internals.Helpers)
 local Paths = require(Internals.Paths)
@@ -23,6 +25,7 @@ local Paths = require(Internals.Paths)
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
 
+local REMOTE_PROPERTY_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_PROPERTY_MARKER")
 local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 {
 	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
@@ -57,7 +60,11 @@ local Started: boolean = false
 --[=[
 	Starts Weaver.
 
-	**This will throw an error if Weaver is already started.**
+	:::caution
+
+	This will throw an error if Weaver has already started.
+
+	:::
 
 	@yields
 ]=]--
@@ -75,8 +82,17 @@ function WeaverServer.Start(): ()
 		local Client: WeaverExposed = {} :: WeaverExposed
 
 		local Network: Folder = Instance.new("Folder")
-		Network.Name = Name
 
+		local Signals: Folder = Instance.new("Folder")
+		local Props: Folder = Instance.new("Folder")
+
+		Props.Name = Paths.PROPERTIES
+		Signals.Name = Paths.SIGNALS
+
+		Signals.Parent = Network
+		Props.Parent = Network
+
+		Network.Name = Name
 		for Index: string, Value: any in Mockup.Client do
 			if (typeof(Index) ~= "string") or (Index == "Server") then
 				continue
@@ -91,7 +107,7 @@ function WeaverServer.Start(): ()
 				end
 
 				Signal.Name = Index
-				Signal.Parent = Network
+				Signal.Parent = Signals
 
 				Client[Index] = Value
 				continue
@@ -103,8 +119,26 @@ function WeaverServer.Start(): ()
 					continue
 				end
 
-				Client[Index] = Instantiate(tostring(Index), Network)
+				Client[Index] = Instantiate(tostring(Index), Signals)
 				continue
+			end
+			-- Type table means that this may be a RemoteProperty
+			if Type == "table" then
+				local Marker: Helpers.Marker? = Value[1]
+				local Default: any? = Value[2]
+
+				if Marker == REMOTE_PROPERTY_MARKER then
+					local Signal: RemoteFunction = Instance.new("RemoteFunction")
+					local Event: RemoteEvent = Instance.new("RemoteEvent")
+
+					Event.Parent = Signal
+
+					Signal.Name = Name
+					Signal.Parent = Props
+
+					Client[Index] = RemoteProperty.new(Signal, Event, Default)
+					continue
+				end
 			end
 		end
 		for Attribute: string, Value: any in Mockup.Attributes do
@@ -208,7 +242,11 @@ end
 --[=[
 	If the `Name` is used for a service, returns the [WeaverService](WeaverServer#WeaverService) from the server.
 
-	**This will throw an error if Weaver has not started, or if `Name` is not used for a service.**
+	:::caution
+
+	This will throw an error if Weaver has not started, or if `Name` is not used for a service.
+
+	:::
 
 	@param Name string
 	@return WeaverService
@@ -224,7 +262,11 @@ end
 --[=[
 	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started.
 
-	**This will throw an error if Weaver has started.**
+	:::caution
+
+	This will throw an error if Weaver has started.
+
+	:::
 
 	@param Service { Attributes: { [string]: any }?, Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
 	@return WeaverMockService
@@ -279,7 +321,11 @@ end
 --[=[
 	Creates a remote signal marker which is turned into a [RemoteSignal] when Weaver is started.
 
-	**This will only create a [RemoteSignal] if it is indexxed into the Client table.**
+	:::caution
+
+	This will only create a [RemoteSignal] if it is indexxed into the Client table.
+
+	:::
 
 	@return Marker
 ]=]--
@@ -289,12 +335,32 @@ end
 --[=[
 	Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox's [UnreliableRemoteEvent]
 
-	**This will only create a [RemoteSignal] if it is indexxed into the Client table.**
+
+	:::caution
+
+	This will only create a [RemoteSignal] if it is indexxed into the Client table.
+
+	:::
 
 	@return Marker
 ]=]--
 function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 	return UNRELIABLE_SIGNAL_MARKER
+end
+--[=[
+	Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox's [UnreliableRemoteEvent]
+
+	:::caution
+
+	This will only create a [RemoteSignal] if it is indexxed into the Client table.
+
+	:::
+
+	@param Default any? -- The starting value that the RemoteProperty will be created with.
+	@return Marker
+]=]--
+function WeaverServer.CreateRemoteProperty(Default: any?): { Helpers.Marker | number }
+	return { REMOTE_PROPERTY_MARKER, Default }
 end
 -- Types
 type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
@@ -306,7 +372,7 @@ type WeaverAttributes = { [string]: any }
 type WeaverMethod = (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
 type WeaverMockExposed =
 {
-	[string]: Helpers.Marker | WeaverMethod;
+	[string]: Helpers.Marker | { Helpers.Marker | number } | WeaverMethod;
 }
 
 type WeaverServiceInit =
@@ -336,8 +402,11 @@ type WeaverMockService =
 --[=[
 	The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.
 
-	@type WeaverExposed { Server: WeaverService, [string]: RemoteSignal | WeaverMethod }
+	@interface WeaverExposed
 	@within WeaverServer
+
+	@field Server WeaverService
+	@field [string] RemoteSignal | RemoteProperty | WeaverMethod
 ]=]--
 export type WeaverExposed =
 {
@@ -347,8 +416,23 @@ export type WeaverExposed =
 --[=[
 	The type used for all services on the server.
 
-	@type WeaverService { AttributeChanged: RBXScriptSignal, Client: WeaverExposed, Name: string, [any]: any, GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal, GetAttribute: (self: WeaverService, Attribute: string) -> any, SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> (), WeaverStart: (self: WeaverService) -> ()?, WeaverInit: (self: WeaverService) -> ()? }
+	@interface WeaverService
 	@within WeaverServer
+
+	@field Name string -- The name of the service.
+	@field Client WeaverExposed
+
+	@field [any] any
+
+	@field WeaverStart (self: WeaverService) -> ()?
+	@field WeaverInit (self: WeaverService) -> ()?
+
+	@field AttributeChanged RBXScriptSignal
+
+	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
+	@field GetAttribute (self: WeaverService, Attribute: string) -> any
+
+	@field SetAttribute (self: WeaverService, Attribute: string, Value: any) -> ()
 ]=]--
 export type WeaverService =
 {
@@ -371,5 +455,13 @@ export type WeaverService =
 	WeaverInit: (self: WeaverService) -> ()?;
 }
 -- Main
+--[=[
+	A module that contains all of the utility modules that Weaver exposes.
+
+	@prop Util { Signal }
+	@within WeaverServer
+
+	@readonly
+]=]--
 WeaverServer.Util = Util
 return table.freeze(WeaverServer)
