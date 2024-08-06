@@ -205,7 +205,7 @@ function WeaverServer.Start(): ()
 				continue
 			end
 			-- Type userdata means that this is a newproxy(), and possibly a marker
-			if Type == "userdata" then
+			if (Type == "userdata") and (Value ~= Helpers.NONE) then
 				local Instantiate: MarkerMethod? = MARKINGS[Value]
 				if not Instantiate then
 					continue
@@ -220,7 +220,7 @@ function WeaverServer.Start(): ()
 			Signal.Name = Index
 			Signal.Parent = Props
 
-			Client[Index] = RemoteProperty.new(Signal, Value)
+			Client[Index] = RemoteProperty.new(Signal, if Value == Helpers.NONE then nil else Value)
 		end
 		for Attribute: string, Value: any in Mockup.Attributes do
 			Network:SetAttribute(Attribute, Value)
@@ -416,7 +416,6 @@ end
 --[=[
 	Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox's [UnreliableRemoteEvent]
 
-
 	:::caution
 
 	This will only create a [RemoteSignal] if it is indexxed into the Client table.
@@ -427,6 +426,14 @@ end
 ]=]--
 function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 	return UNRELIABLE_SIGNAL_MARKER
+end
+--[=[
+	Creates a [RemoteProperty] with a value of `nil` when Weaver has started. If you would like to create a [RemoteProperty] with a value, set your property in your `Client` table to any value, i.e `Service.Client.Property = 0`
+
+	@return Marker
+]=]--
+function WeaverServer.CreateEmptyProperty(): Helpers.None
+	return Helpers.NONE
 end
 -- Main
 --[=[
