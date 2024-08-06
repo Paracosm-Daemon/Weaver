@@ -154,7 +154,7 @@ function RemoteProperty.new(From: RemoteFunction, Event: RemoteEvent, Default: a
 			return self:GetFor(Client)
 		end
 	end
-	return table.freeze(self)
+	return self
 end
 if IS_SERVER then
 	--[=[
