@@ -160,7 +160,7 @@ if IS_SERVER then
 	]=]--
 	function RemoteSignal:FireFor(For: { Player }, ...): ()
 		for _, Client: Player in For do
-			self._Instance:FireClient(Client, ...)
+			self:Fire(Client, ...)
 		end
 	end
 	--[=[
