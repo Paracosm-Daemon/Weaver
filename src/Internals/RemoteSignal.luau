@@ -15,7 +15,9 @@ RemoteSignal.__tostring = function(_self: RemoteSignalImpl): string
 end
 -- Services
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+-- Modules
+local Internals = script.Parent
+local Clients = require(Internals.Clients)
 -- Types
 type RemoteSignalImpl =
 {
@@ -46,6 +48,10 @@ type RemoteSignalImpl =
 	]=]--
 	FireExcept: (self: RemoteSignal, Excluding: { Player }, ...any) -> ();
 	--[=[
+		Fires to all clients in the game, using a filter to specify which clients receive the event.
+	]=]--
+	FireFilter: (self: RemoteSignal, Filter: (Client: Player, ...any) -> boolean, ...any) -> ();
+	--[=[
 		Connects `Callback` to this signal.
 
 		Executes when a client fires this signal to the server, or vice versa.
@@ -71,6 +77,12 @@ type RemoteSignalImpl =
 	@within RemoteSignal
 ]=]--
 type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
+--[=[
+	@private
+
+	@type SignalListener Instance & { OnServerEvent: RBXScriptSignal<(Player, ...any)>, OnClientEvent: RBXScriptSignal<...any>, FireClient: (Client: Player, ...any) -> (), FireAllClients: (...any) -> (), FireServer: (...any) -> () }
+	@within RemoteSignal
+]=]--
 export type SignalListener = Instance & {
 	OnServerEvent: RBXScriptSignal<(Player, ...any)>;
 	OnClientEvent: RBXScriptSignal<...any>;
@@ -80,26 +92,35 @@ export type SignalListener = Instance & {
 	FireAllClients: (...any) -> ();
 	FireServer: (...any) -> ();
 }
+--[=[
+	Determines whether the RemoteSignal is unreliable or not.
+
+	@prop Unreliable boolean
+	@within RemoteSignal
+
+	@readonly
+]=]--
 export type RemoteSignal = typeof(setmetatable({} :: {
+	Unreliable: boolean;
+
 	_Instance: SignalListener;
 	_Event: RBXScriptSignal;
 }, {} :: RemoteSignalImpl))
 -- Constants
 local IS_SERVER: boolean = RunService:IsServer()
--- Variables
-local Clients: { [number]: Player } = {}
-local Hash: { [Player]: number } = {}
-
-local Connected: number = 0
 -- Functions
 --[=[
 	Constructs a new RemoteSignal object.
 
 	@private
+	@param From SignalListener -- The SignalListener to hook.
+
 	@return RemoteSignal
 ]=]--
 function RemoteSignal.new(From: SignalListener): RemoteSignal
 	return table.freeze(setmetatable({
+		Unreliable = From:IsA("UnreliableRemoteEvent");
+
 		_Instance = From;
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
 	}, RemoteSignal))
@@ -108,7 +129,11 @@ if IS_SERVER then
 	--[=[
 		Fires to the specified client, from the server.
 
-		**The first argument of `Fire` must be a [Player].**
+		:::caution
+
+		The first argument of `Fire` must be a [Player].
+
+		:::
 
 		@server
 		@param ... ...any -- The arguments to send over this RemoteSignal.
@@ -146,9 +171,26 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireExcept(Excluding: { Player }, ...): ()
-		local For: { Player } = table.clone(Clients)
+		local For: { Player } = table.clone(Clients.Array)
 		for _, Client: Player in Excluding do
-			For[Hash[Client]] = nil
+			For[Clients.Map[Client]] = nil
+		end
+		self:FireFor(For, ...)
+	end
+	--[=[
+		Fires to all clients in the game, using a filter to specify which clients receive the event.
+
+		@server
+		@param Filter (Client: Player, ...any) -> boolean
+		@param ... ...any
+	]=]--
+	function RemoteSignal:FireFilter(Filter: (Client: Player, ...any) -> boolean, ...): ()
+		local For: { Player } = {}
+		for _, Client: Player in Clients.Array do
+			if not Filter(Client, ...) then
+				continue
+			end
+			For[Clients.Map[Client]] = Client
 		end
 		self:FireFor(For, ...)
 	end
@@ -204,33 +246,6 @@ function RemoteSignal:Wait(): (...any)
 	return self._Event:Wait()
 end
 -- Main
-if IS_SERVER then
-	--[[
-		Using GetPlayers() constantly can be expensive,
-		so I've implemented connections to store all clients
-	]]--
-	Players.PlayerAdded:Connect(function(Client: Player): ()
-		Connected += 1
-
-		Clients[Connected] = Client
-		Hash[Client] = Connected
-	end)
-	Players.PlayerRemoving:Connect(function(Client: Player): ()
-		local Index: number? = Hash[Client]
-		if Index then
-			table.remove(Clients, Index)
-			Hash[Client] = nil
-		end
-		Connected -= 1
-	end)
-
-	Clients = Players:GetPlayers()
-	Connected = #Clients
-
-	for Index: number, Client: Player in Clients do
-		Hash[Client] = Index
-	end
-end
 return table.freeze(RemoteSignal) :: {
 	new: (Instance: SignalListener) -> RemoteSignal;
 }
