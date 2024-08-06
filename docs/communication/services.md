@@ -59,9 +59,7 @@ Let's say that we don't want to expose signals to the client, rather, we want to
 First, we create our service, which handles our signal:
 
 ```lua
-local Weaver = require(Weaver)
 local Signal = Weaver.Util.Signal -- Util is a module, and Signal is already required!
-
 local EventFiringService = Weaver.CreateService{
 	Name = "EventFiringService";
 	SomethingHappened = Signal.new();
@@ -95,13 +93,36 @@ Trying to add [Signals](/api/signal) to [`WeaverService.Client`](/api/WeaverServ
 
 ## Properties
 
-Weaver also has support for [RemoteProperties](/api/RemoteProperty). These are properties which are set by the server, and passed to the client. These properties are also able to be different for every client, while still having a default value. This is great for services which may handle points or currency. As an example, here is a basic points service:
+Weaver also has support for [RemoteProperties](/api/RemoteProperty). These are properties which are set by the server, and passed to the client. These properties are also able to be different for every client, while still having a default value. This is great for services which may handle points or currency. As an example, here is a basic money service:
 
 ```lua
-local PointsService = Weaver.CreateService{ Name = "PointsService" }
-PointsService.Client.Points = 0 -- This will initialize as a RemoteProperty once Weaver is initialized
+local MoneyService = Weaver.CreateService{ Name = "MoneyService" }
+-- This will initialize as a RemoteProperty once Weaver is initialized
+-- The value this is set to will be used as the default
+MoneyService.Client.Money = 0
+MoneyService.Client.AddMoney = Weaver.CreateRemoteSignal()
 
+local Money -- This gets initialized in WeaverInit, so it can be used as a shorthand
+-- This is in the server table, so this won't clash with the signal's name
+function MoneyService:AddMoney(Client: Player, Amount: number): ()
+	Money:SetFor(Client, Money:GetFor(Client) + Amount)
+end
+function MoneyService:WeaverInit(): ()
+	-- Initialize our Money variable
+	Money = self.Client.Money
+	-- Hook our AddMoney signal to the AddMoney function aswell,
+	-- so players can also give themselves money
+	self.Client.AddMoney:Connect(function(Client: number, Amount: number): ()
+		self:AddMoney(Client, Amount)
+	end)
+end
 ```
+
+This service has a setup where both services and clients can add money to their own values, though you may not want to have a setup like this in production.
+
+Similar logic can be used for something that relies on data; if your game uses [DataStores](https://create.roblox.com/docs/cloud-services/data-stores), you may want to set a client's value on a [RemoteProperty](/api/RemoteProperty) to their stored value once they load in. This value could be something like the number of kills a client has reached, or their current level and experience points. Do note that [RemoteProperties](/api/RemoteProperty) can have all data types that [RemoteEvents](https://create.roblox.com/docs/scripting/events/bindable#argument-limitations) support.
+
+The methods, signals, properties, and attributes all have their own distinct uses. You should pick which one you want to use based on which is the mose optimal for your own use cases.
 
 ## Initialization
 
