@@ -22,7 +22,6 @@ First, we're going to set up the service, and then specify a method to respond t
 
 ```lua
 -- This is being ran on the server
-local Weaver = require(Weaver)
 -- CreateService's parameter is a table,
 -- and Name has to be specified as a string for it to be registered
 local PingService = Weaver.CreateService{ Name = "PingService" }
@@ -70,7 +69,6 @@ local MessagingService = game:GetService("MessagingService")
 local POST_TOPIC: string = "GlobalMessages"
 type Payload = { name: string, message: string }
 -- First, create PostService
-local Weaver = require(Weaver)
 local PostService = Weaver.CreateService{ Name = "PostService" }
 -- Then, create the remote signal.
 -- Trying to use it before Weaver has started will throw an exception

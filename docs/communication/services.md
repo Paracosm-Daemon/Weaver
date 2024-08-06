@@ -34,13 +34,15 @@ local Service = Weaver.CreateService{
 }
 ```
 
-Alongside this, you're also free to add any other items to the service's table itself; the only restrictive table are the `Client` and `Attributes` tables. The `Client` table only accepts methods (or functions) and [RemoteSignal](/api/RemoteSignal) markers, which are created via [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal) and [`WeaverServer.CreateUnreliableSignal()`](/api/WeaverServer#CreateUnreliableSignal).
+Alongside this, you're also free to add any other items to the service's table itself; the only restrictive table are the `Client` and `Attributes` tables. The `Client` table accepts methods (or functions) and [RemoteSignal](/api/RemoteSignal) markers, which are created via [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal) and [`WeaverServer.CreateUnreliableSignal()`](/api/WeaverServer#CreateUnreliableSignal). Any other type is classified as a [RemoteProperty](/api/RemoteProperty), and will be instantiated as one.
 
 ```lua
 local Service = Weaver.CreateService{
 	Name = "Service";
 	Client = {
 		ImportantCall = Weaver.CreateRemoteSignal();
+		SomeProperty = 0;
+
 		GetSomething = function(self: WeaverExposed): string
 			return "Something"
 		end;
@@ -51,6 +53,12 @@ local Service = Weaver.CreateService{
 	someSharedValues = { 1, 2, 3 };
 }
 ```
+
+:::caution
+
+The `Client` table is shallow, and all other tables inside of it will be converted into a [RemoteProperty](/api/RemoteProperty) once Weaver starts.
+
+:::
 
 ## Signals
 

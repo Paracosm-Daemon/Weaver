@@ -59,3 +59,28 @@ This way of error handling also goes for [`Weaver.OnStart()`](/api/WeaverServer#
 ## Networking
 
 The equivalent to [`Knit.CreateSignal()`](https://sleitnick.github.io/Knit/api/KnitServer#CreateSignal) in Weaver is [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal). They are functionally the same, but named differently. In Studio, or if you use an IDE, using the shortcut `CTRL + SHIFT + H` should open a "Search and Replace" menu for all scripts in your project. You can easily replace all mentions of `CreateSignal` with `CreateRemoteSignal` this way. Ditto for replacing mentions of Knit with Weaver.
+
+The class that was majorly overhauled was [RemoteProperty](/api/RemoteProperty). While most of the API is the same, there is no `RemoteProperty:Observe()`, unlike [Knit's version](https://sleitnick.github.io/RbxUtil/api/ClientRemoteProperty#Observe). It was instead replaced with the [`RemoteProperty.Changed`](/api/RemoteProperty#Changed) signal, which does not fire when the value for the client has loaded. There is also no substitute to [`Knit.CreateProperty()`](https://sleitnick.github.io/Knit/api/KnitServer#CreateProperty), rather, any values you set in your `Client` table aside from the remote signal markers will be converted into [RemoteProperties](/api/RemoteProperty).
+
+Here's an example of how you would make a [RemoteProperty](https://sleitnick.github.io/RbxUtil/api/RemoteProperty) in Knit:
+
+```lua
+local Service = Knit.CreateService{ Name = "Service" }
+Service.Client.RemoteProperty = Knit.CreateProperty(0)
+```
+
+In Weaver, the constructor has been changed to this:
+
+```lua
+local Service = Weaver.CreateService{ Name = "Service" }
+Service.Client.RemoteProperty = 0
+```
+
+Due to this, you are not able to initialize properties with a value of `nil` in Weaver. This has instead been substituted with the [`WeaverService.CreateEmptyProperty()`](/api/WeaverService#CreateEmptyProperty) function:
+
+```lua
+local Service = Weaver.CreateService{ Name = "Service" }
+Service.Client.RemoteProperty = Weaver.CreateEmptyProperty()
+```
+
+Generally, the API for [RemoteProperties](/api/RemoteProperty) is not too different outside of the [`RemoteProperty.Changed`](/api/RemoteProperty#Changed) signal. Do note that [`RemoteProperty:SetTop()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#SetTop), [`RemoteProperty:SetForList()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#SetForList), and [`RemoteProperty:ClearForList()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#ClearForList) have been renamed to [`RemoteProperty:SetDefault()`](/api/RemoteProperty#SetDefault), [`RemoteProperty:SetForEach()`](/api/RemoteProperty#SetForEach), and [`RemoteProperty:ClearForEach()`](/api/RemoteProperty#ClearForEach) respectively. Extra quality-of-life functions have also been added, which you can see in Weaver's [RemoteProperty API reference](/api/RemoteProperty).
