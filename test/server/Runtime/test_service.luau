@@ -11,6 +11,7 @@ local EXPECTED_ATTRIBUTE_VALUE: string = "foo"
 local EXCEPTION_UNEXPECTED_ATTRIBUTE: string = `{ EXPECTED_ATTRIBUTE_NAME } is not { EXPECTED_ATTRIBUTE_VALUE }! Got type %s with value %s`
 local EXCEPTION_PARAM_ERROR: string = "Param %d of %s is not %s! Got type %s with value %s"
 
+local EXCEPTION_UNEXPECTED_PROPERTY: string = "TestProperty value for %s is not %s! Got type %s with value %s"
 local DEFAULT_PROPERTY_VALUE: number = 0
 -- Service
 local Module = Weaver.CreateService{ Name = script.Name }
@@ -65,11 +66,21 @@ function Module:WeaverInit(): ()
 			assert(Type == "number", string.format(EXCEPTION_PARAM_ERROR, 2, "TestSignal", "number", Type, tostring(Input)))
 
 			Tester:Latch(function(Free): ()
-				self.Client.TestProperty:SetFor(Client, Input)
-				assert(self.Client.TestProperty:GetFor(Client) == Input, `TestProperty value for { Client } is not { Input }!`)
+				self.Client.TestProperty:SetFor(Client, nil)
+
+				local Value: any? = self.Client.TestProperty:GetFor(Client)
+				assert(Value == nil, string.format(EXCEPTION_UNEXPECTED_PROPERTY, Client.Name, "null", typeof(Value), tostring(Value)))
 
 				Free()
-			end, "RemoteProperty SetFor")
+			end, "RemoteProperty SetFor NULL")
+			Tester:Latch(function(Free): ()
+				self.Client.TestProperty:SetFor(Client, Input)
+
+				local Value: any? = self.Client.TestProperty:GetFor(Client)
+				assert(Value == Input, string.format(EXCEPTION_UNEXPECTED_PROPERTY, Client.Name, Input, typeof(Value), tostring(Value)))
+
+				Free()
+			end, "RemoteProperty SetFor Value")
 			Tester:Latch(function(Free): ()
 				self.Client.TestProperty:Clear()
 				assert(self.Client.TestProperty:GetFor(Client) == DEFAULT_PROPERTY_VALUE, `TestProperty value for { Client } is not { DEFAULT_PROPERTY_VALUE }!`)
