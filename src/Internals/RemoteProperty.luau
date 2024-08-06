@@ -3,9 +3,9 @@
 --[=[
 	@class RemoteProperty
 
-	Weaver's built-in implementation for RemoteEvents.
+	Weaver's implementation of Knit's [RemoteProperties](https://sleitnick.github.io/RbxUtil/api/RemoteProperty/).
 
-	This is an interface meant to make using RemoteEvents much easier, with functions identical to [Signal].
+	Internally, these are simply RemoteEvents which can store different values for clients.
 ]=]--
 local RemoteProperty: RemotePropertyImpl = {} :: RemotePropertyImpl
 
@@ -34,7 +34,7 @@ type RemotePropertyImpl =
 	--[=[
 		Constructs a new RemoteProperty object.
 	]=]--
-	new: (Instance: RemoteFunction, Event: RemoteEvent, Default: any?) -> RemoteProperty;
+	new: (Instance: RemoteEvent, Default: any?) -> RemoteProperty;
 	--[=[
 		Sets the default value of the RemoteProperty, clearing all clients' custom values.
 	]=]--
@@ -94,7 +94,7 @@ type RemotePropertyImpl =
 ]=]--
 type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
 --[=[
-	Fires when the RemoteProperty's value is changed.
+	Fires when the RemoteProperty's value has changed. Note that this won't fire if the value that the server sets is the same as your currently registered value.
 
 	@client
 
@@ -107,8 +107,10 @@ export type RemoteProperty = typeof(setmetatable({} :: {
 	_Values: { [Player]: any? };
 	_Default: any?;
 
-	_Instance: RemoteFunction;
-	_Event: RemoteEvent;
+	_Threads: { thread }?;
+	_Waiting: number?;
+
+	_Instance: RemoteEvent;
 }, {} :: RemotePropertyImpl))
 -- Constants
 local IS_SERVER: boolean = RunService:IsServer()
@@ -122,16 +124,15 @@ end
 	Constructs a new RemoteProperty object.
 	@private
 
-	@param From RemoteFunction -- The RemoteFunction to hook.
+	@param From RemoteEvent -- The RemoteEvent to hook.
 	@param Default any? -- The default value of the RemoteProperty.
 
 	@return RemoteProperty
 ]=]--
-function RemoteProperty.new(From: RemoteFunction, Event: RemoteEvent, Default: any?): RemoteProperty
+function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 	local self =
 	{
 		_Instance = From;
-		_Event = Event;
 	}
 	if IS_SERVER then
 		-- These values are only set on the server
@@ -142,17 +143,40 @@ function RemoteProperty.new(From: RemoteFunction, Event: RemoteEvent, Default: a
 			self._Values[Client] = nil
 		end)
 	else
+		local Threads: { thread } = {}
+
+		self._Threads = Threads :: { thread }?
+		self._Waiting = 0 :: number?
+
 		self.Changed = Signal.new()
-		Event.OnClientEvent:Connect(function(Value: any?): ()
+		From.OnClientEvent:Connect(function(Value: any?): ()
+			local Last: any? = self._Default
+			self._Default = if Value == nil then Helpers.NONE else Value
+
+			if Last == nil then
+				if self._Waiting == 0 then
+					return
+				end
+				for Index: number = 1, self._Waiting :: number, 1 do
+					task.spawn(Threads[Index], Value)
+				end
+
+				self._Threads = nil
+				self._Waiting = nil
+
+				return
+			end
 			self.Changed:Fire(Value)
 		end)
+		-- Fire once to receive the first value assigned to the client
+		From:FireServer()
 	end
 
 	setmetatable(self, RemoteProperty)
 	if IS_SERVER then
-		From.OnServerInvoke = function(Client: Player): any?
-			return self:GetFor(Client)
-		end
+		From.OnServerEvent:Connect(function(Client: Player): ()
+			From:FireClient(Client, self:GetFor(Client))
+		end)
 	end
 	return self
 end
@@ -168,7 +192,7 @@ if IS_SERVER then
 			if self:GetFor(Client) == Default then
 				continue
 			end
-			self._Event:FireClient(Client, Default)
+			self._Instance:FireClient(Client, Default)
 		end
 		table.clear(self._Values)
 	end
@@ -187,7 +211,7 @@ if IS_SERVER then
 			if self._Values[Client] then
 				continue
 			end
-			self._Event:FireClient(Client, Default)
+			self._Instance:FireClient(Client, Default)
 		end
 	end
 	--[=[
@@ -201,7 +225,7 @@ if IS_SERVER then
 		end
 
 		self._Values[For] = if Value == nil then Helpers.NONE else Value
-		self._Event:FireClient(For, Value)
+		self._Instance:FireClient(For, Value)
 	end
 	--[=[
 		Sets the value of this RemoteProperty for the clients specified.
@@ -258,7 +282,7 @@ if IS_SERVER then
 		self._Values[For] = nil
 
 		if Last ~= self._Default then
-			self._Event:FireClient(For, self._Default)
+			self._Instance:FireClient(For, self._Default)
 		end
 	end
 	--[=[
@@ -313,19 +337,32 @@ if IS_SERVER then
 	]=]--
 	function RemoteProperty:GetFor(Client: Player): any?
 		local Value: any? = self._Values[Client]
-		return if Value ~= nil then GetValue(Value) else self._Default
+		return if Value == nil then self._Default else GetValue(Value)
 	end
 else
 	--[=[
 		Gets the current value of the RemoteProperty.
 
+		:::caution Yielding
+
+		This function will yield when you first call `:Get()` if the server has not sent a Changed event at least once. If this is an issue that worries you, try calling `:Get()` once in [`WeaverController:WeaverInit()`](WeaverClient#WeaverController) so that the value is guaranteed to exist.
+
+		:::
+
+		@yields
 		@client
 	]=]--
 	function RemoteProperty:Get(): any?
-		return self._Instance:InvokeServer()
+		if (self._Default == nil) and self._Threads and self._Waiting then
+			self._Waiting += 1
+			self._Threads[self._Waiting] = coroutine.running()
+
+			return coroutine.yield()
+		end
+		return GetValue(self._Default)
 	end
 end
 -- Main
 return table.freeze(RemoteProperty) :: {
-	new: (Instance: RemoteFunction, Event: RemoteEvent, Default: any?) -> RemoteProperty;
+	new: (Instance: RemoteEvent, Default: any?) -> RemoteProperty;
 }

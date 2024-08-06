@@ -214,15 +214,12 @@ function WeaverServer.Start(): ()
 				continue
 			end
 			-- Assign other types to a RemoteProperty, since they're defined in the Client table
-			local Signal: RemoteFunction = Instance.new("RemoteFunction")
-			local Event: RemoteEvent = Instance.new("RemoteEvent")
-
-			Event.Parent = Signal
+			local Signal: RemoteEvent = Instance.new("RemoteEvent")
 
 			Signal.Name = Index
 			Signal.Parent = Props
 
-			Client[Index] = RemoteProperty.new(Signal, Event, Value)
+			Client[Index] = RemoteProperty.new(Signal, Value)
 		end
 		for Attribute: string, Value: any in Mockup.Attributes do
 			Network:SetAttribute(Attribute, Value)

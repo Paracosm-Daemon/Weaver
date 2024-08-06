@@ -273,15 +273,10 @@ function WeaverClient.GetService(Name: string): WeaverService
 		end
 	end
 	for _, Child: Instance in Props:GetChildren() do
-		if not Child:IsA("RemoteFunction") then
+		if not Child:IsA("RemoteEvent") then
 			continue
 		end
-
-		local Event: RemoteEvent? = Child:FindFirstChildWhichIsA("RemoteEvent")
-		if not Event then
-			continue
-		end
-		Service[Child.Name] = RemoteProperty.new(Child, Event)
+		Service[Child.Name] = RemoteProperty.new(Child)
 	end
 	-- Define only GetAttribute(s)/GetAttributeChangedSignal
 	function Service:GetAttribute(Attribute: string): any
