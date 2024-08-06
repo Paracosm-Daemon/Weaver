@@ -17,9 +17,13 @@ local Module = script.Parent
 local Internals = Module.Internals
 local Util = require(Module.Util)
 
+local RemoteProperty = require(Internals.RemoteProperty)
 local RemoteSignal = require(Internals.RemoteSignal)
+
 local Exceptions = require(Internals.Exceptions)
 local Paths = require(Internals.Paths)
+-- Constants
+local CLIENT: Player = Players.LocalPlayer
 -- Variables
 local Controllers: { [string]: WeaverController } = {}
 
@@ -71,7 +75,11 @@ end
 --[=[
 	Starts Weaver.
 
-	**This will throw an error if Weaver is already started.**
+	:::caution
+
+	This will throw an error if Weaver is already started.
+
+	:::
 
 	@yields
 ]=]--
@@ -150,6 +158,7 @@ end
 	This will yield until a service matching the name is found.
 
 	@yields
+
 	@param Name string
 	@return WeaverService
 ]=]--
@@ -194,9 +203,12 @@ function WeaverClient.GetService(Name: string): WeaverService
 			end
 		end)
 	end
+	-- These are safe if the WeaverService was constructed properly
+	local Props: Folder = Path[Paths.PROPERTIES]
+	local Signals: Folder = Path[Paths.SIGNALS]
 
 	local Service: WeaverService = {} :: WeaverService
-	for _, Child: Instance in Path:GetChildren() do
+	for _, Child: Instance in Signals:GetChildren() do
 		if Child:IsA("RemoteEvent") or Child:IsA("UnreliableRemoteEvent") then
 			Service[Child.Name] = RemoteSignal.new(Child :: RemoteSignal.SignalListener)
 			continue
@@ -207,6 +219,17 @@ function WeaverClient.GetService(Name: string): WeaverService
 			end
 			continue
 		end
+	end
+	for _, Child: Instance in Props:GetChildren() do
+		if not Child:IsA("RemoteFunction") then
+			continue
+		end
+
+		local Event: RemoteEvent? = Child:FindFirstChildWhichIsA("RemoteEvent")
+		if not Event then
+			continue
+		end
+		Service[Child.Name] = RemoteProperty.new(Child, Event)
 	end
 	-- Define only GetAttribute(s)/GetAttributeChangedSignal
 	function Service:GetAttribute(Attribute: string): any
@@ -233,7 +256,11 @@ end
 --[=[
 	If the `Name` is used for a controller, returns the [WeaverController] from the server.
 
-	**This will throw an error if Weaver has not started, or if `Name` is not used for a controller.**
+	:::caution
+
+	This will throw an error if Weaver has not started, or if `Name` is not used for a controller.
+
+	:::
 
 	@param Name string
 	@return WeaverController
@@ -250,7 +277,11 @@ end
 --[=[
 	Creates and adds a [WeaverController] before Weaver has started.
 
-	**This will throw an error if Weaver has started.**
+	:::caution
+
+	This will throw an error if Weaver has started.
+
+	:::
 
 	@param Controller WeaverController
 	@return WeaverController
@@ -300,8 +331,15 @@ end
 --[=[
 	The type used for all services on the client.
 
-	@type WeaverService { AttributeChanged: RBXScriptSignal, GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal, GetAttribute: (self: WeaverService, Attribute: string) -> any, [string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any) }
+	@interface WeaverService
 	@within WeaverClient
+
+	@field AttributeChanged RBXScriptSignal
+
+	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
+	@field GetAttribute (self: WeaverService, Attribute: string) -> any
+
+	@field [string] RemoteSignal | RemoteProperty | (self: WeaverService, ...any) -> (...any)
 ]=]--
 export type WeaverService =
 {
@@ -313,13 +351,19 @@ export type WeaverService =
 	GetAttribute: (self: WeaverService, Attribute: string) -> any;
 	GetAttributes: (self: WeaverService) -> { [string]: any };
 
-	[string]: RemoteSignal.RemoteSignal | (self: WeaverService, ...any) -> (...any);
+	[string]: RemoteSignal.RemoteSignal | RemoteProperty.RemoteProperty | (self: WeaverService, ...any) -> (...any);
 }
 --[=[
 	The type used for all controllers.
 
-	@type WeaverController { Name: string, [any]: any, WeaverStart: (self: WeaverController) -> ()?, WeaverInit: (self: WeaverController) -> ()? }
+	@interface WeaverController
 	@within WeaverClient
+
+	@field Name string -- The name of the controller.
+	@field [any] any
+
+	@field WeaverStart (self: WeaverController) -> ()?
+	@field WeaverInit (self: WeaverController) -> ()?
 ]=]--
 export type WeaverController =
 {
@@ -331,7 +375,22 @@ export type WeaverController =
 	WeaverInit: (self: WeaverController) -> ()?;
 }
 -- Main
-WeaverClient.Client = Players.LocalPlayer
-WeaverClient.Util = Util
+--[=[
+	A reference to `Players.LocalPlayer` that you can easily access through Weaver.
 
+	@prop Player Player
+	@within WeaverClient
+
+	@readonly
+]=]--
+WeaverClient.Player = CLIENT
+--[=[
+	A module that contains all of the utility modules that Weaver exposes.
+
+	@prop Util { Signal }
+	@within WeaverClient
+
+	@readonly
+]=]--
+WeaverClient.Util = Util
 return WeaverClient
