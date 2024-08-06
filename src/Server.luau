@@ -25,7 +25,6 @@ local Paths = require(Internals.Paths)
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
 
-local REMOTE_PROPERTY_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_PROPERTY_MARKER")
 local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 {
 	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
@@ -122,24 +121,16 @@ function WeaverServer.Start(): ()
 				Client[Index] = Instantiate(tostring(Index), Signals)
 				continue
 			end
-			-- Type table means that this may be a RemoteProperty
-			if Type == "table" then
-				local Marker: Helpers.Marker? = Value[1]
-				local Default: any? = Value[2]
+			-- Assign other types to a RemoteProperty, since they're defined in the Client table
+			local Signal: RemoteFunction = Instance.new("RemoteFunction")
+			local Event: RemoteEvent = Instance.new("RemoteEvent")
 
-				if Marker == REMOTE_PROPERTY_MARKER then
-					local Signal: RemoteFunction = Instance.new("RemoteFunction")
-					local Event: RemoteEvent = Instance.new("RemoteEvent")
+			Event.Parent = Signal
 
-					Event.Parent = Signal
+			Signal.Name = Index
+			Signal.Parent = Props
 
-					Signal.Name = Name
-					Signal.Parent = Props
-
-					Client[Index] = RemoteProperty.new(Signal, Event, Default)
-					continue
-				end
-			end
+			Client[Index] = RemoteProperty.new(Signal, Event, Value)
 		end
 		for Attribute: string, Value: any in Mockup.Attributes do
 			Network:SetAttribute(Attribute, Value)
@@ -347,21 +338,6 @@ end
 function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 	return UNRELIABLE_SIGNAL_MARKER
 end
---[=[
-	Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox's [UnreliableRemoteEvent]
-
-	:::caution
-
-	This will only create a [RemoteSignal] if it is indexxed into the Client table.
-
-	:::
-
-	@param Default any? -- The starting value that the RemoteProperty will be created with.
-	@return Marker
-]=]--
-function WeaverServer.CreateRemoteProperty(Default: any?): { Helpers.Marker | number }
-	return { REMOTE_PROPERTY_MARKER, Default }
-end
 -- Types
 type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
 type WeaverAttributes = { [string]: any }
@@ -372,7 +348,7 @@ type WeaverAttributes = { [string]: any }
 type WeaverMethod = (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
 type WeaverMockExposed =
 {
-	[string]: Helpers.Marker | { Helpers.Marker | number } | WeaverMethod;
+	[string]: Helpers.Marker | WeaverMethod | any;
 }
 
 type WeaverServiceInit =
