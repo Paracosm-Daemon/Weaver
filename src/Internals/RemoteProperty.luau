@@ -20,6 +20,7 @@ local Players = game:GetService("Players")
 local Weaver = script.Parent.Parent
 local Internals = Weaver.Internals
 
+local Exceptions = require(Internals.Exceptions)
 local Clients = require(Internals.Clients)
 local Helpers = require(Internals.Helpers)
 
@@ -220,6 +221,9 @@ if IS_SERVER then
 		@server
 	]=]--
 	function RemoteProperty:SetFor(For: Player, Value: any?): ()
+		local Type: string = typeof(For)
+		assert((Type == "Instance") and For:IsA("Player"), string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "For", "Player", `type { Type } with value { tostring(For) }`))
+
 		local New: any = if Value == nil then Helpers.NONE else Value
 		if self._Values[For] == New then
 			return
