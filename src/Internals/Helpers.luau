@@ -1,14 +1,18 @@
 --!strict
 -- Module
-local Helpers = {}
+local Helpers =
+{
+	NONE = newproxy(false);
+}
 -- Functions
 function Helpers.CreateMarker(Name: string): Marker
 	local Marker: Marker = newproxy(true)
-	getmetatable(Marker).__tostring = function(): string
+	getmetatable(Marker).__tostring = function(_self: { [any]: any }): string
 		return Name
 	end
 	return Marker
 end
--- Main
+-- Types
 export type Marker = typeof(newproxy(false))
+-- Main
 return table.freeze(Helpers)

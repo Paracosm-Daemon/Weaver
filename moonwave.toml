@@ -6,7 +6,7 @@ classes = ["WeaverServer", "WeaverClient"]
 
 [[classOrder]]
 section = "Networking"
-classes = ["RemoteSignal", "Signal", "SignalConnection"]
+classes = ["RemoteSignal", "RemoteProperty", "Signal", "SignalConnection"]
 
 [home]
 enabled = true
