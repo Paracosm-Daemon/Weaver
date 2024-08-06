@@ -10,7 +10,7 @@ local Signal = Weaver.Util.Signal
 local EXPECTED_SIGNAL_INPUT: number = 123
 local EXCEPTION_UNEXPECTED_SIGNAL: string = `Input is not { EXPECTED_SIGNAL_INPUT }! Got type %s with value %s`
 
-local EXPECTED_ATTRIBUTE_NAME: string = "testAttribute"
+local EXPECTED_ATTRIBUTE_NAME: string = "TestAttribute"
 local EXPECTED_ATTRIBUTE_VALUE: string = "foo"
 
 local EXCEPTION_UNEXPECTED_ATTRIBUTE: string = `{ EXPECTED_ATTRIBUTE_NAME } is not { EXPECTED_ATTRIBUTE_VALUE }! Got type %s with value %s`

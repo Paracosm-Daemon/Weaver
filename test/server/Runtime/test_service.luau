@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Weaver = require(ReplicatedStorage.Weaver)
 local Lock = require(ReplicatedStorage.Lock)
 -- Constants
-local EXPECTED_ATTRIBUTE_NAME: string = "testAttribute"
+local EXPECTED_ATTRIBUTE_NAME: string = "TestAttribute"
 local EXPECTED_ATTRIBUTE_VALUE: string = "foo"
 
 local EXCEPTION_UNEXPECTED_ATTRIBUTE: string = `{ EXPECTED_ATTRIBUTE_NAME } is not { EXPECTED_ATTRIBUTE_VALUE }! Got type %s with value %s`
@@ -20,7 +20,7 @@ local Tester: Lock.Lock = Lock.new()
 Module.Client.TestSignal = Weaver.CreateRemoteSignal()
 Module.Client.TestProperty = DEFAULT_PROPERTY_VALUE
 
-Module.Attributes.testAttribute = "foo"
+Module.Attributes.TestAttribute = "foo"
 -- Functions
 -- Client
 function Module.Client:Frobulate(Client: Player, Frobulations: number): number
