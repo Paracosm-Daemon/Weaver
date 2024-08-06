@@ -21,6 +21,98 @@ local RemoteSignal = require(Internals.RemoteSignal)
 local Exceptions = require(Internals.Exceptions)
 local Helpers = require(Internals.Helpers)
 local Paths = require(Internals.Paths)
+-- Types
+type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
+type WeaverAttributes = { [string]: any }
+--[=[
+	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
+	@within WeaverServer
+]=]--
+type WeaverMethod = (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
+type WeaverMockExposed =
+{
+	[string]: Helpers.Marker | WeaverMethod | any;
+}
+
+type WeaverServiceInit =
+{
+	-- Variables
+	Attributes: WeaverAttributes?;
+	Client: WeaverMockExposed?;
+
+	Name: string;
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
+}
+type WeaverMockService =
+{
+	-- Variables
+	Attributes: WeaverAttributes;
+	Client: WeaverMockExposed;
+
+	Name: string;
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
+}
+--[=[
+	The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.
+
+	@interface WeaverExposed
+	@within WeaverServer
+
+	@field Server WeaverService
+	@field [string] RemoteSignal | RemoteProperty | WeaverMethod
+]=]--
+export type WeaverExposed =
+{
+	Server: WeaverService;
+	[string]: any;
+}
+--[=[
+	The type used for all services on the server.
+
+	@interface WeaverService
+	@within WeaverServer
+
+	@field Name string -- The name of the service.
+	@field Client WeaverExposed
+
+	@field [any] any
+
+	@field WeaverStart (self: WeaverService) -> ()?
+	@field WeaverInit (self: WeaverService) -> ()?
+
+	@field AttributeChanged RBXScriptSignal
+
+	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
+	@field GetAttribute (self: WeaverService, Attribute: string) -> any
+
+	@field SetAttribute (self: WeaverService, Attribute: string, Value: any) -> ()
+]=]--
+export type WeaverService =
+{
+	-- Variables
+	AttributeChanged: RBXScriptSignal;
+
+	Client: WeaverExposed;
+	Name: string;
+
+	[any]: any;
+	-- Methods
+	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+
+	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+	GetAttributes: (self: WeaverService) -> { [string]: any };
+
+	SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> ();
+
+	WeaverStart: (self: WeaverService) -> ()?;
+	WeaverInit: (self: WeaverService) -> ()?;
+}
 -- Constants
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
@@ -338,98 +430,6 @@ end
 function WeaverServer.CreateUnreliableSignal(): Helpers.Marker
 	return UNRELIABLE_SIGNAL_MARKER
 end
--- Types
-type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
-type WeaverAttributes = { [string]: any }
---[=[
-	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
-	@within WeaverServer
-]=]--
-type WeaverMethod = (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
-type WeaverMockExposed =
-{
-	[string]: Helpers.Marker | WeaverMethod | any;
-}
-
-type WeaverServiceInit =
-{
-	-- Variables
-	Attributes: WeaverAttributes?;
-	Client: WeaverMockExposed?;
-
-	Name: string;
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
-}
-type WeaverMockService =
-{
-	-- Variables
-	Attributes: WeaverAttributes;
-	Client: WeaverMockExposed;
-
-	Name: string;
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
-}
---[=[
-	The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.
-
-	@interface WeaverExposed
-	@within WeaverServer
-
-	@field Server WeaverService
-	@field [string] RemoteSignal | RemoteProperty | WeaverMethod
-]=]--
-export type WeaverExposed =
-{
-	Server: WeaverService;
-	[string]: any;
-}
---[=[
-	The type used for all services on the server.
-
-	@interface WeaverService
-	@within WeaverServer
-
-	@field Name string -- The name of the service.
-	@field Client WeaverExposed
-
-	@field [any] any
-
-	@field WeaverStart (self: WeaverService) -> ()?
-	@field WeaverInit (self: WeaverService) -> ()?
-
-	@field AttributeChanged RBXScriptSignal
-
-	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
-	@field GetAttribute (self: WeaverService, Attribute: string) -> any
-
-	@field SetAttribute (self: WeaverService, Attribute: string, Value: any) -> ()
-]=]--
-export type WeaverService =
-{
-	-- Variables
-	AttributeChanged: RBXScriptSignal;
-
-	Client: WeaverExposed;
-	Name: string;
-
-	[any]: any;
-	-- Methods
-	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
-
-	GetAttribute: (self: WeaverService, Attribute: string) -> any;
-	GetAttributes: (self: WeaverService) -> { [string]: any };
-
-	SetAttribute: (self: WeaverService, Attribute: string, Value: any) -> ();
-
-	WeaverStart: (self: WeaverService) -> ()?;
-	WeaverInit: (self: WeaverService) -> ()?;
-}
 -- Main
 --[=[
 	A module that contains all of the utility modules that Weaver exposes.

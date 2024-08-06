@@ -149,6 +149,11 @@ function RemoteProperty.new(From: RemoteFunction, Event: RemoteEvent, Default: a
 	end
 
 	setmetatable(self, RemoteProperty)
+	if IS_SERVER then
+		From.OnServerInvoke = function(Client: Player): any?
+			return self:GetFor(Client)
+		end
+	end
 	return table.freeze(self)
 end
 if IS_SERVER then

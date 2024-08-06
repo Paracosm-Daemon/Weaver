@@ -22,6 +22,53 @@ local RemoteSignal = require(Internals.RemoteSignal)
 
 local Exceptions = require(Internals.Exceptions)
 local Paths = require(Internals.Paths)
+-- Types
+--[=[
+	The type used for all services on the client.
+
+	@interface WeaverService
+	@within WeaverClient
+
+	@field AttributeChanged RBXScriptSignal
+
+	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
+	@field GetAttribute (self: WeaverService, Attribute: string) -> any
+
+	@field [string] RemoteSignal | RemoteProperty | (self: WeaverService, ...any) -> (...any)
+]=]--
+export type WeaverService =
+{
+	-- Variables
+	AttributeChanged: RBXScriptSignal;
+	-- Methods
+	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
+
+	GetAttribute: (self: WeaverService, Attribute: string) -> any;
+	GetAttributes: (self: WeaverService) -> { [string]: any };
+
+	[string]: RemoteSignal.RemoteSignal | RemoteProperty.RemoteProperty | (self: WeaverService, ...any) -> (...any);
+}
+--[=[
+	The type used for all controllers.
+
+	@interface WeaverController
+	@within WeaverClient
+
+	@field Name string -- The name of the controller.
+	@field [any] any
+
+	@field WeaverStart (self: WeaverController) -> ()?
+	@field WeaverInit (self: WeaverController) -> ()?
+]=]--
+export type WeaverController =
+{
+	-- Variables
+	Name: string;
+	[any]: any;
+	-- Methods
+	WeaverStart: (self: WeaverController) -> ()?;
+	WeaverInit: (self: WeaverController) -> ()?;
+}
 -- Constants
 local CLIENT: Player = Players.LocalPlayer
 -- Variables
@@ -31,8 +78,8 @@ local Services: { [string]: WeaverService } = {}
 local Standby: { [string]: { thread } } = {}
 
 local Queue: { thread } = {}
-local Waiting: number = 0
 
+local Waiting: number = 0
 local Bridge: Folder
 
 local Running: boolean = false
@@ -332,53 +379,6 @@ function WeaverClient.AddControllers(Handle: Instance): { WeaverController }
 	end
 	return Added
 end
--- Types
---[=[
-	The type used for all services on the client.
-
-	@interface WeaverService
-	@within WeaverClient
-
-	@field AttributeChanged RBXScriptSignal
-
-	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
-	@field GetAttribute (self: WeaverService, Attribute: string) -> any
-
-	@field [string] RemoteSignal | RemoteProperty | (self: WeaverService, ...any) -> (...any)
-]=]--
-export type WeaverService =
-{
-	-- Variables
-	AttributeChanged: RBXScriptSignal;
-	-- Methods
-	GetAttributeChangedSignal: (self: WeaverService, Attribute: string) -> RBXScriptSignal;
-
-	GetAttribute: (self: WeaverService, Attribute: string) -> any;
-	GetAttributes: (self: WeaverService) -> { [string]: any };
-
-	[string]: RemoteSignal.RemoteSignal | RemoteProperty.RemoteProperty | (self: WeaverService, ...any) -> (...any);
-}
---[=[
-	The type used for all controllers.
-
-	@interface WeaverController
-	@within WeaverClient
-
-	@field Name string -- The name of the controller.
-	@field [any] any
-
-	@field WeaverStart (self: WeaverController) -> ()?
-	@field WeaverInit (self: WeaverController) -> ()?
-]=]--
-export type WeaverController =
-{
-	-- Variables
-	Name: string;
-	[any]: any;
-	-- Methods
-	WeaverStart: (self: WeaverController) -> ()?;
-	WeaverInit: (self: WeaverController) -> ()?;
-}
 -- Main
 --[=[
 	A reference to `Players.LocalPlayer` that you can easily access through Weaver.
