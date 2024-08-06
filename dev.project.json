@@ -4,6 +4,7 @@
 		"$className": "DataModel",
 		"ReplicatedStorage": {
 			"$className": "ReplicatedStorage",
+			"$path": "test/shared",
 			"Weaver": {
 				"$path": "src"
 			}
