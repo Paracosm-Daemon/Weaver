@@ -6,14 +6,15 @@ This was originally developed as an alternative to [Knit](https://github.com/Sle
 
 All code is written in Luau and up-to-date with the latest technology in Roblox, including typechecking.
 
-# Documentation
+## Documentation
 
 More information about Weaver and its usage can be found in the [documentation](https://paracosm-daemon.github.io/Weaver/).
 
-# Credits
+## Credits
 
-This repository's tools are managed using [Rokit](https://github.com/rojo-rbx/rokit), a next-generation toolchain manager.
-
-[Lune](https://github.com/lune-org/lune) is used for publishing the module to the Roblox marketplace.
-
-All documentation was created using [Moonwave](https://github.com/evaera/moonwave).
+* [Rokit](https://github.com/rojo-rbx/rokit)
+	* This repository's tools are managed using Rokit.
+* [Lune](https://github.com/lune-org/lune)
+	* Used to publish the module to the Roblox marketplace.
+* [Moonwave](https://github.com/evaera/moonwave)
+	All documentation was created using Moonwave.
