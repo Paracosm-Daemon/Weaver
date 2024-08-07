@@ -1,6 +1,14 @@
-[![Publish](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/release.yaml)
-[![CI](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml)
-[![Docs](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml)
+<div align="center">
+    <a href="https://paracosm-daemon.github.io/Weaver"><img src="assets/logo/LOGO512" alt="Weaver" height="200" /></a>
+</div>
+
+<div>&nbsp;</div>
+
+<div align="center">
+    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/release.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml/badge.svg" alt="CI" /></a>
+    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml/badge.svg" alt="Release" /></a>
+    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml/badge.svg" alt="Documentation" /></a>
+</div>
 
 # Weaver
 
