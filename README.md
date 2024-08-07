@@ -1,4 +1,6 @@
-![Weaver](assets/logo/LOGO128.png)
+[![Publish](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/release.yaml)
+[![CI](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml)
+[![Docs](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml/badge.svg)](https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml)
 
 # Weaver
 
