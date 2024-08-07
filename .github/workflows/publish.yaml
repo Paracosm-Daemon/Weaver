@@ -18,24 +18,23 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish Repo to Wally
         shell: bash
-        env:
-          WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
         run: |
           mkdir -p ~/.wally
           echo "$WALLY_AUTH" > ~/.wally/auth.toml
           cd src
           wally publish
-          cd ..
+        env:
+          WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
       - name: Build and Publish to Roblox
         shell: bash
         run: rojo build main.project.json -o .lune/Weaver.rbxm
       - name: Publish Module to Marketplace
         shell: bash
-        env:
-          LUNE_AUTH: ${{ secrets.LUNE_AUTH }}
         run: |
           cd .lune
           lune run build.luau
+        env:
+          LUNE_AUTH: ${{ secrets.LUNE_AUTH }}
       - name: Get Version
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
