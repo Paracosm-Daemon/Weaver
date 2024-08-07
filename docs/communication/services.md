@@ -136,7 +136,7 @@ The methods, signals, properties, and attributes all have their own distinct use
 
 Trying to utilize services before Weaver has started will result in errors, especially when dealing with [RemoteSignals](/api/RemoteSignal). This is because Weaver needs to construct all of the services internally so that they are ready when WeaverInit and WeaverStart are called. This is because the client could have unexpected behavior dealing with services, as issues related to [race conditions](https://en.wikipedia.org/wiki/Race_condition) may cause certain signals to be missing, should services be initialized early.
 
-Weaver's way of dealing with this is through two methods: WeaverInit and WeaverStart. As outlined in the [execution model](/extras/execution-model), all service objects are internally created and handled, then WeaverInit is called, followed by WeaverStart. These methods are declared by adding `Service:WeaverInit()` and `Service:WeaverStart()` to your service.
+Weaver's way of dealing with this is through two methods: WeaverInit and WeaverStart. As outlined in the [execution model](/docs/extras/execution-model), all service objects are internally created and handled, then WeaverInit is called, followed by WeaverStart. These methods are declared by adding `Service:WeaverInit()` and `Service:WeaverStart()` to your service.
 
 ```lua
 local MyMultiStepService = Weaver.CreateService{
