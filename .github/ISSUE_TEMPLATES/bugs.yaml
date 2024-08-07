@@ -1,0 +1,19 @@
+name: Bug Report
+description: Use this for reporting bugs in Weaver.
+
+labels: [bug]
+body:
+  - type: markdown
+    id: description
+    attributes:
+      label: "Describe the bug and the steps to reproduce it here."
+    validations:
+      required: true
+
+  - type: markdown
+    id: console
+    attributes:
+      label: "If possible, please send your console logs here."
+      render: bash
+    validations:
+      required: false

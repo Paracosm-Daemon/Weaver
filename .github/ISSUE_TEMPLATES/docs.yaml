@@ -1,0 +1,10 @@
+name: Documentation Issue
+description: Use this for reporting any issues in Weaver's documentation you've found.
+
+labels: [documentation]
+body:
+  - type: markdown
+    attributes:
+      label: What's wrong with the documentation (or missing)?
+    validations:
+      required: true

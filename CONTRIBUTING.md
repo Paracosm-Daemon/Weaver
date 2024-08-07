@@ -26,4 +26,15 @@ If you contribute to Weaver, please try and maintain the coding style that the m
 * Pascal_Snake_Case for variables
 * PascalCase for functions
 
+Tables are formatted like this:
+
+```lua
+local Some_Table =
+{
+	ValueA = 1;
+	ValueB = 2;
+	ValueC = 3;
+}
+```
+
 If possible, add comments to your code to explain what it does. This helps in having your pull request reviewed faster, and hopefully pulled into Weaver.
