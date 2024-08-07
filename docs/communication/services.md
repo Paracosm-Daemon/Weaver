@@ -34,7 +34,7 @@ local Service = Weaver.CreateService{
 }
 ```
 
-Alongside this, you're also free to add any other items to the service's table itself; the only restrictive table are the `Client` and `Attributes` tables. The `Client` table accepts methods (or functions) and [RemoteSignal](/api/RemoteSignal) markers, which are created via [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal) and [`WeaverServer.CreateUnreliableSignal()`](/api/WeaverServer#CreateUnreliableSignal). Any other type is classified as a [RemoteProperty](/api/RemoteProperty), and will be instantiated as one.
+Alongside this, you're also free to add any other items to the service's table itself; the only restrictive table are the `Client` and `Attributes` tables. The `Client` table accepts methods and [RemoteSignal](/api/RemoteSignal) markers, which are created via [`WeaverServer.CreateRemoteSignal()`](/api/WeaverServer#CreateRemoteSignal) and [`WeaverServer.CreateUnreliableSignal()`](/api/WeaverServer#CreateUnreliableSignal). Any other type is classified as a [RemoteProperty](/api/RemoteProperty), and will be instantiated as one.
 
 ```lua
 local Service = Weaver.CreateService{
@@ -136,7 +136,7 @@ The methods, signals, properties, and attributes all have their own distinct use
 
 Trying to utilize services before Weaver has started will result in errors, especially when dealing with [RemoteSignals](/api/RemoteSignal). This is because Weaver needs to construct all of the services internally so that they are ready when WeaverInit and WeaverStart are called. This is because the client could have unexpected behavior dealing with services, as issues related to [race conditions](https://en.wikipedia.org/wiki/Race_condition) may cause certain signals to be missing, should services be initialized early.
 
-Weaver's way of dealing with this is through two functions: WeaverInit and WeaverStart. As outlined in the [execution model](/extras/execution-model), all service objects are internally created and handled, then WeaverInit is called, followed by WeaverStart. These functions are declared by adding `Service:WeaverInit()` and `Service:WeaverStart()` to your service.
+Weaver's way of dealing with this is through two methods: WeaverInit and WeaverStart. As outlined in the [execution model](/extras/execution-model), all service objects are internally created and handled, then WeaverInit is called, followed by WeaverStart. These methods are declared by adding `Service:WeaverInit()` and `Service:WeaverStart()` to your service.
 
 ```lua
 local MyMultiStepService = Weaver.CreateService{
@@ -193,6 +193,6 @@ When you first create a Weaver service, a few things will not be available:
 
 * [`WeaverService.Client`](/api/WeaverServer#WeaverService) will not be initialized until Weaver is started, meaning all [RemoteSignals](/api/RemoteSignal) will still be markers, and all [RemoteProperties](/api/RemoteProperty) will only be the values that you put in the `Client` table.
 * `Client.Server`, which is used to access the `Server` table from methods within the `Client` table, will also not be initialized until Weaver has started.
-* All of `WeaverService`'s attribute methods will be unavailable, as Weaver needs to start to initialize the service, which then internally sets the attributes and exposes the functions.
+* All of `WeaverService`'s attribute methods will be unavailable, as Weaver needs to start to initialize the service, which then internally sets the attributes and exposes the methods.
 
 See Weaver's [execution model](/docs/extras/execution-model) to understand how services are initialized.
