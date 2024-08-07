@@ -19,8 +19,7 @@ jobs:
       - name: Publish Repo to Wally
         shell: bash
         run: |
-          mkdir -p ~/.wally
-          echo "$WALLY_AUTH" > ~/.wally/auth.toml
+          wally login --token "$WALLY_AUTH"
           cd src
           wally publish
           cd .
