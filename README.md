@@ -1,4 +1,4 @@
-![Weaver](assets/logo/LOGO512.png)
+![Weaver](assets/logo/LOGO128.png)
 
 # Weaver
 
