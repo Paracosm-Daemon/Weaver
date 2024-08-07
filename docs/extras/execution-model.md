@@ -40,4 +40,4 @@ When using Weaver, your project structure should generally follow these rules:
 * One script on the client manages the [WeaverClient](/api/WeaverClient)
 	* This means that all controller modules should be used in one script, alongside [`WeaverClient.Start()`](/api/WeaverClient#Start)
 
-This is to enforce the [single-script architecture](https://medium.com/roblox-development/this-article-was-originally-published-in-them-magazines-de995382e352) that Weaver uses, as Weaver will not work correctly if your project uses a multi-script architecture.
+Since Weaver relies on a [single-script architecture](https://medium.com/roblox-development/this-article-was-originally-published-in-them-magazines-de995382e352) it may not work correctly if your project uses a multi-script architecture.
