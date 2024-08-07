@@ -5,6 +5,22 @@ version = "1.0.0"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-include = ["src"]
+exclude = [
+	".github",
+	".lune",
+	".moonwave",
+	".vscode",
+	"assets",
+	"docs",
+	"test",
+	".gitignore",
+	"dev.project.json",
+	"moonwave.toml",
+	"selene.toml",
+	"rokit.toml",
+	"LICENSE",
+	"CONTRIBUTING.md",
+	"README.md"
+]
 
 [dependencies]
