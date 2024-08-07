@@ -25,7 +25,7 @@ jobs:
           WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
       - name: Build and Publish to Roblox
         shell: bash
-        run: rojo build main.project.json -o .lune/Weaver.rbxm
+        run: rojo build default.project.json -o .lune/Weaver.rbxm
       - name: Publish Module to Marketplace
         shell: bash
         run: |
