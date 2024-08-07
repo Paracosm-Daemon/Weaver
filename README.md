@@ -5,8 +5,8 @@
 <div>&nbsp;</div>
 
 <div align="center">
-    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/release.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml/badge.svg" alt="CI" /></a>
-    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml/badge.svg" alt="Release" /></a>
+    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/publish.yaml/badge.svg" alt="Publish" /></a>
+    <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/ci.yaml/badge.svg" alt="CI" /></a>
     <a href="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml"><img src="https://github.com/Paracosm-Daemon/Weaver/actions/workflows/docs.yaml/badge.svg" alt="Documentation" /></a>
 </div>
 
