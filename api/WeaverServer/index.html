@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v2.3.1">
+<title data-rh="true">WeaverServer | Weaver</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://paracosm-daemon.github.io/Weaver/api/WeaverServer"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="WeaverServer | Weaver"><meta data-rh="true" name="description" content="The server backend of Weaver.
+
+All of the logic here is for starting and handling services alongside the communication bridge with the client."><meta data-rh="true" property="og:description" content="The server backend of Weaver.
+
+All of the logic here is for starting and handling services alongside the communication bridge with the client."><link data-rh="true" rel="icon" href="/Weaver/favicon.png"><link data-rh="true" rel="canonical" href="https://paracosm-daemon.github.io/Weaver/api/WeaverServer"><link data-rh="true" rel="alternate" href="https://paracosm-daemon.github.io/Weaver/api/WeaverServer" hreflang="en"><link data-rh="true" rel="alternate" href="https://paracosm-daemon.github.io/Weaver/api/WeaverServer" hreflang="x-default"><link rel="stylesheet" href="/Weaver/assets/css/styles.e1adec2f.css">
+<link rel="preload" href="/Weaver/assets/js/runtime~main.e9021dcf.js" as="script">
+<link rel="preload" href="/Weaver/assets/js/main.f59100ff.js" as="script">
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function e(e){document.documentElement.setAttribute("data-theme",e)}var t=function(){var e=null;try{e=localStorage.getItem("theme")}catch(e){}return e}();null!==t?e(t):window.matchMedia("(prefers-color-scheme: dark)").matches?e("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,e("light"))}()</script><div id="__docusaurus">
+<div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Weaver/"><b class="navbar__title text--truncate">Weaver</b></a><a class="navbar__item navbar__link" href="/Weaver/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/Weaver/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/paracosm-daemon/weaver" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="searchBox_ZlJk"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input type="search" id="search_input_react" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" aria-expanded="true" href="/Weaver/api/WeaverServer">Core</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/Weaver/api/WeaverServer">​Weaver​Server</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/Weaver/api/WeaverClient">​Weaver​Client</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" aria-expanded="false" href="/Weaver/api/RemoteSignal">Networking</a></div></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">Weaver</span><span style="display:inline-block">Server</span></h1><div class="luaClassTags_EipM"><span class="badge_Ba2I" style="color:#00CC67"><span class="badgeTooltip_cWXP">This item only works when running on the server.</span><span class="badgeToolTipTail_H9D_"><svg fill="#00CC67" xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" viewBox="0 0 90 90" role="img" aria-label="This item only works when running on the server."><polygon points="6.125,72.421 58.544,88.523 58.544,24.372 6.125,8.269 "></polygon><polygon points="79.818,15.77 79.868,15.755 29.615,1.453 10.328,6.318 60.102,21.609 "></polygon><path d="M61.643,78.738l22.232-6.582V17.801l-22.232,6.584V78.738z M73.811,69.257c-1.174,0-2.125-1.19-2.125-2.659  c0-1.468,0.951-2.658,2.125-2.658c1.172,0,2.123,1.19,2.123,2.658C75.934,68.066,74.982,69.257,73.811,69.257z M64.898,32.121  l16.336-4.41v7.117l-16.336,4.409V32.121z M64.898,41.292l16.336-4.41v7.116l-16.336,4.409V41.292z M64.898,50.463l16.336-4.411  v7.116l-16.336,4.411V50.463z"></path><polygon points="83.875,74.893 61.643,81.477 61.643,88.547 83.875,81.963 "></polygon></svg> <!-- -->Server</span></span></div><div>
+<p>The server backend of Weaver.</p>
+<p>All of the logic here is for starting and handling services alongside the communication bridge with the client.</p>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="WeaverMethod"><code style="text-decoration:none">WeaverMethod</code><a href="#WeaverMethod" class="hash-link" aria-label="Direct link to WeaverMethod" title="Direct link to WeaverMethod">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L31"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>WeaverMethod<!-- --> = </code> <code class="purple_ieR2">(</code><div class="inset_uKQm"><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverExposed">WeaverExposed</a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Invoker<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code class="blue_P4bS">...any</code></div><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="blue_P4bS">...any</code><code class="purple_ieR2">)</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="WeaverExposed"><code style="text-decoration:none">WeaverExposed</code><a href="#WeaverExposed" class="hash-link" aria-label="Direct link to WeaverExposed" title="Direct link to WeaverExposed">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L70"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>WeaverExposed<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Server<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code></div><div><code>[string]<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/RemoteSignal">RemoteSignal</a></code><code class="op_lSLc"> | </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/RemoteProperty">RemoteProperty</a></code><code class="op_lSLc"> | </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverMethod">WeaverMethod</a></code></div></div><code>}</code></div><div>
+<p>The type that the <code>Client</code> table in <a href="WeaverServer#WeaverService">WeaverService</a> uses.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="WeaverService"><code style="text-decoration:none">WeaverService</code><a href="#WeaverService" class="hash-link" aria-label="Direct link to WeaverService" title="Direct link to WeaverService">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L96"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">interface</code> <code>WeaverService<!-- --> <!-- -->{</code><div class="inset_uKQm"><div><code>Name<!-- -->: </code><code class="blue_P4bS">string</code><span class="inlineDescription_G7Er">-- <span>
+<p>The name of the service.</p>
+</span></span></div><div><code>Client<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverExposed">WeaverExposed</a></code></div><div><code>[any]<!-- -->: </code><code class="blue_P4bS">any</code></div><div><code>WeaverStart<!-- -->: </code><code class="purple_ieR2">(</code><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code></div><div><code>WeaverInit<!-- -->: </code><code class="purple_ieR2">(</code><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="purple_ieR2">)</code><code class="blue_P4bS">?</code></div><div><code>AttributeChanged<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/RBXScriptSignal" target="_blank" rel="noopener noreferrer">RBXScriptSignal<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div><code>GetAttributeChangedSignal<!-- -->: </code><code class="purple_ieR2">(</code><div class="inset_uKQm"><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Attribute<!-- -->: </code><code class="blue_P4bS">string</code></div><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/RBXScriptSignal" target="_blank" rel="noopener noreferrer">RBXScriptSignal<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div><code>GetAttribute<!-- -->: </code><code class="purple_ieR2">(</code><div class="inset_uKQm"><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Attribute<!-- -->: </code><code class="blue_P4bS">string</code></div><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="blue_P4bS">any</code></div><div><code>SetAttribute<!-- -->: </code><code class="purple_ieR2">(</code><div class="inset_uKQm"><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Attribute<!-- -->: </code><code class="blue_P4bS">string</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Value<!-- -->: </code><code class="blue_P4bS">any</code></div><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="purple_ieR2">)</code></div></div><code>}</code></div><div>
+<p>The type used for all services on the server.</p>
+</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="properties">Properties<a href="#properties" class="hash-link" aria-label="Direct link to Properties" title="Direct link to Properties">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Util"><code style="text-decoration:none">Util</code><a href="#Util" class="hash-link" aria-label="Direct link to Util" title="Direct link to Util">​</a></h3><span class="badge_Ba2I" style="color:#e74c3c"><span class="badgeTooltip_cWXP">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L453"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.<!-- -->Util<!-- -->:<!-- --> </code> <code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/Signal">Signal</a></code><code class="purple_ieR2">}</code></div><div>
+<p>A module that contains all of the utility modules that Weaver exposes.</p>
+</div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Start"><code style="text-decoration:none">Start</code><a href="#Start" class="hash-link" aria-label="Direct link to Start" title="Direct link to Start">​</a></h3><span class="badge_Ba2I" style="color:#f1c40f"><span class="badgeTooltip_cWXP">This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#f1c40f" role="img" aria-label="This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts."><path d="M96.4 11.9c-1.4-2.5-4-4-6.9-4H10.8c-2.9 0-5.4 1.5-6.9 4-1.4 2.5-1.4 5.5 0 7.9L43.3 88c1.4 2.5 4 4 6.9 4 2.9 0 5.4-1.5 6.9-4l39.3-68.2c1.4-2.4 1.4-5.4 0-7.9zM46.3 54.5c1.1-1.1 2.3-1.6 3.8-1.6s2.8.5 3.8 1.6c1.1 1.1 1.6 2.3 1.6 3.8s-.5 2.8-1.6 3.8c-1.1 1.1-2.3 1.6-3.8 1.6s-2.8-.5-3.8-1.6c-1.1-1.1-1.6-2.3-1.6-3.8.1-1.5.6-2.8 1.6-3.8zm-.5-4.9V21.8h8.8v27.8h-8.8z"></path></svg> <!-- -->Yields</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L162"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">Start</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Starts Weaver.</p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will throw an error if Weaver has already started.</p>
+  </div>
+</div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="OnStart"><code style="text-decoration:none">OnStart</code><a href="#OnStart" class="hash-link" aria-label="Direct link to OnStart" title="Direct link to OnStart">​</a></h3><span class="badge_Ba2I" style="color:#f1c40f"><span class="badgeTooltip_cWXP">This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#f1c40f" role="img" aria-label="This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts."><path d="M96.4 11.9c-1.4-2.5-4-4-6.9-4H10.8c-2.9 0-5.4 1.5-6.9 4-1.4 2.5-1.4 5.5 0 7.9L43.3 88c1.4 2.5 4 4 6.9 4 2.9 0 5.4-1.5 6.9-4l39.3-68.2c1.4-2.4 1.4-5.4 0-7.9zM46.3 54.5c1.1-1.1 2.3-1.6 3.8-1.6s2.8.5 3.8 1.6c1.1 1.1 1.6 2.3 1.6 3.8s-.5 2.8-1.6 3.8c-1.1 1.1-2.3 1.6-3.8 1.6s-2.8-.5-3.8-1.6c-1.1-1.1-1.6-2.3-1.6-3.8.1-1.5.6-2.8 1.6-3.8zm-.5-4.9V21.8h8.8v27.8h-8.8z"></path></svg> <!-- -->Yields</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L313"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">OnStart</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Yields until Weaver has started. Useful for external modules that are not ran as services.</p>
+<p>If Weaver has already started, this will not yield.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetService"><code style="text-decoration:none">GetService</code><a href="#GetService" class="hash-link" aria-label="Direct link to GetService" title="Direct link to GetService">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L335"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">GetService</code><code>(</code><code>Name<!-- -->: </code><code class="blue_P4bS">string</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code></div><div>
+<p>If the <code>Name</code> is used for a service, returns the <a href="WeaverServer#WeaverService">WeaverService</a> from the server.</p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will throw an error if Weaver has not started, or if <code>Name</code> is not used for a service.</p>
+  </div>
+</div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CreateService"><code style="text-decoration:none">CreateService</code><a href="#CreateService" class="hash-link" aria-label="Direct link to CreateService" title="Direct link to CreateService">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L355"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">CreateService</code><code>(</code><code>Service<!-- -->: </code><code class="purple_ieR2">{</code><div class="inset_uKQm"><code>Attributes<!-- -->: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="green_DgR4">}</code><code class="blue_P4bS">?</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Client<!-- -->: </code><code class="green_DgR4">{</code><span><code>[</code><code class="blue_P4bS">string</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="green_DgR4">}</code><code class="blue_P4bS">?</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>Name<!-- -->: </code><code class="blue_P4bS">string</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><span><code>[</code><code class="blue_P4bS">any</code><code>]</code></span><code>: </code><code class="blue_P4bS">any</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>WeaverStart<!-- -->: </code><code class="green_DgR4">(</code><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="green_DgR4">(</code><code class="green_DgR4">)</code><code class="blue_P4bS">?</code><code class="purple_ieR2">,</code></div><div class="inset_uKQm"><code>WeaverInit<!-- -->: </code><code class="green_DgR4">(</code><code>self<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="green_DgR4">)</code><code class="green_DgR4"> → </code><code class="green_DgR4">(</code><code class="green_DgR4">)</code><code class="blue_P4bS">?</code></div><code class="purple_ieR2">}</code><code>) → </code><code class="blue_P4bS">WeaverMockService</code></div><div>
+<p>Creates and adds a <a href="WeaverServer#WeaverService">WeaverService</a> before Weaver has started.</p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will throw an error if Weaver has started.</p>
+  </div>
+</div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddServices"><code style="text-decoration:none">AddServices</code><a href="#AddServices" class="hash-link" aria-label="Direct link to AddServices" title="Direct link to AddServices">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L383"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">AddServices</code><code>(</code><code>Handle<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code class="purple_ieR2">{</code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/WeaverServer#WeaverService">WeaverService</a></code><code class="purple_ieR2">}</code></div><div>
+<p>Adds all services from <code>Handle</code> to Weaver automatically.</p>
+<p>Returns an array of all of the added <a href="WeaverServer#WeaverService">WeaverServices</a>.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CreateRemoteSignal"><code style="text-decoration:none">CreateRemoteSignal</code><a href="#CreateRemoteSignal" class="hash-link" aria-label="Direct link to CreateRemoteSignal" title="Direct link to CreateRemoteSignal">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L413"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">CreateRemoteSignal</code><code>(</code><code>) → </code><code class="blue_P4bS">Marker</code></div><div>
+<p>Creates a remote signal marker which is turned into a <a href="/Weaver/api/RemoteSignal">RemoteSignal</a> when Weaver is started.</p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will only create a <a href="/Weaver/api/RemoteSignal">RemoteSignal</a> if it is indexxed into the Client table.</p>
+  </div>
+</div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CreateUnreliableSignal"><code style="text-decoration:none">CreateUnreliableSignal</code><a href="#CreateUnreliableSignal" class="hash-link" aria-label="Direct link to CreateUnreliableSignal" title="Direct link to CreateUnreliableSignal">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L427"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">CreateUnreliableSignal</code><code>(</code><code>) → </code><code class="blue_P4bS">Marker</code></div><div>
+<p>Creates an unreliable signal marker which is turned into a <a href="/Weaver/api/RemoteSignal">RemoteSignal</a> when Weaver is started. This is adjacent to Roblox's <a href="https://developer.roblox.com/en-us/api-reference/class/UnreliableRemoteEvent" target="_blank">UnreliableRemoteEvent</a></p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will only create a <a href="/Weaver/api/RemoteSignal">RemoteSignal</a> if it is indexxed into the Client table.</p>
+  </div>
+</div>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="CreateEmptyProperty"><code style="text-decoration:none">CreateEmptyProperty</code><a href="#CreateEmptyProperty" class="hash-link" aria-label="Direct link to CreateEmptyProperty" title="Direct link to CreateEmptyProperty">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Server.luau#L441"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>WeaverServer<!-- -->.</code><code class="green_DgR4">CreateEmptyProperty</code><code>(</code><code>) → </code><code class="blue_P4bS">Marker</code></div><div>
+<p>Creates a <a href="/Weaver/api/RemoteProperty">RemoteProperty</a> with a value of <code>nil</code> when Weaver has started. If you would like to create a <a href="/Weaver/api/RemoteProperty">RemoteProperty</a> with a value, set your property in your <code>Client</code> table to any value, i.e <code>Service.Client.Property = 0</code></p>
+<div class="admonition admonition-caution alert alert--warning">
+  <div class="admonition-heading">
+    <h5><span class="admonition-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path>
+        </svg></span>caution</h5>
+  </div>
+  <div class="admonition-content">
+    <p>This will only create a <a href="/Weaver/api/RemoteProperty">RemoteProperty</a> if it is indexxed into the Client table.</p>
+  </div>
+</div>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;Start&quot;,
+            &quot;desc&quot;: &quot;Starts Weaver.\n\n:::caution\n\nThis will throw an error if Weaver has already started.\n\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;yields&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 162,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;OnStart&quot;,
+            &quot;desc&quot;: &quot;Yields until Weaver has started. Useful for external modules that are not ran as services.\n\nIf Weaver has already started, this will not yield.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;yields&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 313,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetService&quot;,
+            &quot;desc&quot;: &quot;If the `Name` is used for a service, returns the [WeaverService](WeaverServer#WeaverService) from the server.\n\n:::caution\n\nThis will throw an error if Weaver has not started, or if `Name` is not used for a service.\n\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Name&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;WeaverService&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 335,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CreateService&quot;,
+            &quot;desc&quot;: &quot;Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started.\n\n:::caution\n\nThis will throw an error if Weaver has started.\n\n:::&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Service&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ Attributes: { [string]: any }?, Client: { [string]: any }?, Name: string, [any]: any, WeaverStart: (self: WeaverService) -&gt; ()?, WeaverInit: (self: WeaverService) -&gt; ()? }&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;WeaverMockService&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 355,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddServices&quot;,
+            &quot;desc&quot;: &quot;Adds all services from `Handle` to Weaver automatically.\n\nReturns an array of all of the added [WeaverServices](WeaverServer#WeaverService).&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Handle&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Instance&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;{ WeaverService }&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 383,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CreateRemoteSignal&quot;,
+            &quot;desc&quot;: &quot;Creates a remote signal marker which is turned into a [RemoteSignal] when Weaver is started.\n\n:::caution\n\nThis will only create a [RemoteSignal] if it is indexxed into the Client table.\n\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Marker&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 413,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CreateUnreliableSignal&quot;,
+            &quot;desc&quot;: &quot;Creates an unreliable signal marker which is turned into a [RemoteSignal] when Weaver is started. This is adjacent to Roblox&#x27;s [UnreliableRemoteEvent]\n\n:::caution\n\nThis will only create a [RemoteSignal] if it is indexxed into the Client table.\n\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Marker&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 427,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;CreateEmptyProperty&quot;,
+            &quot;desc&quot;: &quot;Creates a [RemoteProperty] with a value of `nil` when Weaver has started. If you would like to create a [RemoteProperty] with a value, set your property in your `Client` table to any value, i.e `Service.Client.Property = 0`\n\n:::caution\n\nThis will only create a [RemoteProperty] if it is indexxed into the Client table.\n\n:::&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Marker&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 441,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [
+        {
+            &quot;name&quot;: &quot;Util&quot;,
+            &quot;desc&quot;: &quot;A module that contains all of the utility modules that Weaver exposes.&quot;,
+            &quot;lua_type&quot;: &quot;{ Signal }&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 453,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        }
+    ],
+    &quot;types&quot;: [
+        {
+            &quot;name&quot;: &quot;WeaverMethod&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;lua_type&quot;: &quot;(self: WeaverExposed, Invoker: Player, ...any) -&gt; (...any)&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 31,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;WeaverExposed&quot;,
+            &quot;desc&quot;: &quot;The type that the `Client` table in [WeaverService](WeaverServer#WeaverService) uses.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;Server&quot;,
+                    &quot;lua_type&quot;: &quot;WeaverService&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;[string]&quot;,
+                    &quot;lua_type&quot;: &quot;RemoteSignal | RemoteProperty | WeaverMethod&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 70,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;WeaverService&quot;,
+            &quot;desc&quot;: &quot;The type used for all services on the server.&quot;,
+            &quot;fields&quot;: [
+                {
+                    &quot;name&quot;: &quot;Name&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;,
+                    &quot;desc&quot;: &quot;The name of the service.&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Client&quot;,
+                    &quot;lua_type&quot;: &quot;WeaverExposed&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;[any]&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;WeaverStart&quot;,
+                    &quot;lua_type&quot;: &quot;(self: WeaverService) -&gt; ()?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;WeaverInit&quot;,
+                    &quot;lua_type&quot;: &quot;(self: WeaverService) -&gt; ()?&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;AttributeChanged&quot;,
+                    &quot;lua_type&quot;: &quot;RBXScriptSignal&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;GetAttributeChangedSignal&quot;,
+                    &quot;lua_type&quot;: &quot;(self: WeaverService, Attribute: string) -&gt; RBXScriptSignal&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;GetAttribute&quot;,
+                    &quot;lua_type&quot;: &quot;(self: WeaverService, Attribute: string) -&gt; any&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;SetAttribute&quot;,
+                    &quot;lua_type&quot;: &quot;(self: WeaverService, Attribute: string, Value: any) -&gt; ()&quot;,
+                    &quot;desc&quot;: &quot;&quot;
+                }
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 96,
+                &quot;path&quot;: &quot;src/Server.luau&quot;
+            }
+        }
+    ],
+    &quot;name&quot;: &quot;WeaverServer&quot;,
+    &quot;desc&quot;: &quot;The server backend of Weaver.\n\nAll of the logic here is for starting and handling services alongside the communication bridge with the client.&quot;,
+    &quot;realm&quot;: [
+        &quot;Server&quot;
+    ],
+    &quot;source&quot;: {
+        &quot;line&quot;: 11,
+        &quot;path&quot;: &quot;src/Server.luau&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#WeaverExposed" class="table-of-contents__link toc-highlight">WeaverExposed</a></li><li><a href="#WeaverMethod" class="table-of-contents__link toc-highlight">WeaverMethod</a></li><li><a href="#WeaverService" class="table-of-contents__link toc-highlight">WeaverService</a></li></ul></li><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Util" class="table-of-contents__link toc-highlight">Util</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#AddServices" class="table-of-contents__link toc-highlight">.AddServices</a></li><li><a href="#CreateEmptyProperty" class="table-of-contents__link toc-highlight">.CreateEmptyProperty</a></li><li><a href="#CreateRemoteSignal" class="table-of-contents__link toc-highlight">.CreateRemoteSignal</a></li><li><a href="#CreateService" class="table-of-contents__link toc-highlight">.CreateService</a></li><li><a href="#CreateUnreliableSignal" class="table-of-contents__link toc-highlight">.CreateUnreliableSignal</a></li><li><a href="#GetService" class="table-of-contents__link toc-highlight">.GetService</a></li><li><a href="#OnStart" class="table-of-contents__link toc-highlight">.OnStart</a></li><li><a href="#Start" class="table-of-contents__link toc-highlight">.Start</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2024 Oliver S. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+<script src="/Weaver/assets/js/runtime~main.e9021dcf.js"></script>
+<script src="/Weaver/assets/js/main.f59100ff.js"></script>
+</body>
+</html>
