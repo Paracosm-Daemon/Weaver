@@ -19,7 +19,6 @@ jobs:
       - name: Publish Repo to Wally
         shell: bash
         run: |
-          rokit self-install
           mkdir -p ~/.wally
           echo "$WALLY_AUTH" > ~/.wally/auth.toml
           cd src
