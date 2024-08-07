@@ -19,10 +19,12 @@ jobs:
       - name: Publish Repo to Wally
         shell: bash
         run: |
+          rokit self-install
           mkdir -p ~/.wally
           echo "$WALLY_AUTH" > ~/.wally/auth.toml
           cd src
           wally publish
+          cd .
         env:
           WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
       - name: Build and Publish to Roblox
