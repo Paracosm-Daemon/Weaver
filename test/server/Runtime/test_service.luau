@@ -1,7 +1,6 @@
 --!strict
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 -- Modules
 local Weaver = require(ReplicatedStorage.Weaver)
 local Lock = require(ReplicatedStorage.Lock)

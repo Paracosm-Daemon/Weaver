@@ -26,9 +26,9 @@ jobs:
           cd src
           wally publish
           cd ..
-      - name: Build Place
+      - name: Build and Publish to Roblox
         shell: bash
-        run: rojo build main.project.json -o Weaver.rbxm
+        run: rojo build main.project.json -o .lune/Weaver.rbxm
       - name: Publish Module to Marketplace
         shell: bash
         env:

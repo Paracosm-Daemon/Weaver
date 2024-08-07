@@ -12,7 +12,7 @@ Below are the current ways to install Weaver and get it working in your game.
 
 Since Weaver is available as a package for Wally, you are able to install it by adding this beneath `[dependencies]` in your `wally.toml` file:
 
-`Weaver = "paracosm-daemon/weaver@^0.0.1"`
+`Weaver = "paracosm-daemon/weaver@^1.0.0"`
 
 If you would like to use Wally, you can [learn more here](https://github.com/UpliftGames/wally).
 

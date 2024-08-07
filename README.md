@@ -17,4 +17,4 @@ More information about Weaver and its usage can be found in the [documentation](
 * [Lune](https://github.com/lune-org/lune)
 	* Used to publish the module to the Roblox marketplace.
 * [Moonwave](https://github.com/evaera/moonwave)
-	All documentation was created using Moonwave.
+	* All documentation was created using Moonwave.

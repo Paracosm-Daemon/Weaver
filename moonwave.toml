@@ -1,4 +1,8 @@
+title = "Weaver"
+gitRepoUrl = "https://github.com/paracosm-daemon/weaver"
+
 gitSourceBranch = "main"
+changelog = true
 
 [[classOrder]]
 section = "Core"
@@ -13,7 +17,7 @@ enabled = true
 includeReadme = false
 
 [docusaurus]
-title = "Weaver"
+projectName = "Weaver"
 tagline = "A fast, lightweight game framework for Roblox"
 url = "https://paracosm-daemon.github.io"
 baseUrl = "/Weaver"
