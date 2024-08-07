@@ -40,7 +40,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ steps.get_version.outputs.VERSION }}
-          body_path: log.md
           fail_on_unmatched_files: true
           files: |
             .lune/Weaver.rbxm
