@@ -43,4 +43,4 @@ jobs:
           body_path: log.md
           fail_on_unmatched_files: true
           files: |
-            Weaver.rbxm
+            .lune/Weaver.rbxm
