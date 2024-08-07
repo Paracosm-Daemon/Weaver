@@ -1,3 +1,5 @@
+![Weaver](assets/logo/LOGO512.png)
+
 # Weaver
 
 Weaver is a fast, lightweight game framework meant for simple yet seamless game networking and synchronization. Weaver adheres by a single-script architecture, with a setup for the creation of services and controllers, allowing quick and painless communication from script-to-script without the need of BindableEvents/Functions.

@@ -17,8 +17,13 @@ enabled = true
 includeReadme = false
 
 [docusaurus]
+favicon = "/favicon.png"
+
 projectName = "Weaver"
+organizationName = "Paracosm-Daemon"
+
 tagline = "A fast, lightweight game framework for Roblox"
+
 url = "https://paracosm-daemon.github.io"
 baseUrl = "/Weaver"
 
