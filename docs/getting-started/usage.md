@@ -14,7 +14,7 @@ Weaver.Start() -- Hooray, Weaver has started!
 
 That is the _bare minimum_ that Weaver needs to run. However, this does not load any [WeaverServices](/api/WeaverServer#WeaverService) or [WeaverControllers](/api/WeaverClient#WeaverController). To do so, we need to create them.
 
-Let's create a service on the server. It can be anything, but for this example, a simple "ping" service can work. Let's say that we want it to communicate with the client to play ping-pong. When a service is created via [`WeaverServer.CreateService()`](/api/WeaverService#CreateService), it will always have a Client table. There is more detail on how [`WeaverServices`](/api/WeaverServer#WeaverService) work in the [Communication page](/docs/communication/services).
+Let's create a service on the server. It can be anything, but for this example, a simple "ping" service can work. Let's say that we want it to communicate with the client to play ping-pong. When a service is created via [`WeaverServer.CreateService()`](/api/WeaverServer#CreateService), it will always have a Client table. There is more detail on how [`WeaverServices`](/api/WeaverServer#WeaverService) work in the [Communication page](/docs/communication/services).
 
 ## Methods
 

@@ -76,7 +76,7 @@ local Service = Weaver.CreateService{ Name = "Service" }
 Service.Client.RemoteProperty = 0
 ```
 
-Due to this, you are not able to initialize properties with a value of `nil` in Weaver. This has instead been substituted with the [`WeaverService.CreateEmptyProperty()`](/api/WeaverService#CreateEmptyProperty) function:
+Due to this, you are not able to initialize properties with a value of `nil` in Weaver. This has instead been substituted with the [`WeaverService.CreateEmptyProperty()`](/api/WeaverServer#CreateEmptyProperty) function:
 
 ```lua
 local Service = Weaver.CreateService{ Name = "Service" }
