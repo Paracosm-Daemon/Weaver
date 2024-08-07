@@ -6,7 +6,7 @@ When creating an issue, you should use the template respective to what you're re
 
 ## Documentation
 
-Contributions to documentation are some of the most useful for Weaver. Generally, the documentation was written to hopefully clarify all of Weaver and how to use it, from the usage to the execution model, though there are always possibilities that something was wrong or mistyped. If you notice any misspellings, bad phrasing, dead links, et cetera, you're free to make an issue or pull request to have what you spotted fixed.
+Contributions to documentation are some of the most useful for Weaver. Generally, the documentation was written to hopefully clarify all of Weaver and how to use it, from the usage to the execution model, though there are always possibilities that something was wrong or mistyped. If you notice any misspellings, bad phrasing, et cetera, you're free to make an issue or pull request to have what you spotted fixed.
 
 ## Bug Reports
 
