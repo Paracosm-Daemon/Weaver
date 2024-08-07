@@ -16,13 +16,11 @@ jobs:
         uses: kalrnlo/setup-rokit@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish Repo to Wally
+      - name: Publish to Wally
         shell: bash
         run: |
           wally login --token "$WALLY_AUTH"
-          cd src
           wally publish
-          cd .
         env:
           WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
       - name: Build and Publish to Roblox
