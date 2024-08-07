@@ -25,7 +25,7 @@ organizationName = "Paracosm-Daemon"
 tagline = "A fast, lightweight game framework for Roblox"
 
 url = "https://paracosm-daemon.github.io"
-baseUrl = "/Weaver"
+baseUrl = "/"
 
 [footer]
 style = "dark"
