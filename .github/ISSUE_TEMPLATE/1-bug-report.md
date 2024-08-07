@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Use this for reporting bugs in Weaver.
-title: 'Bug:'
+title: 'Bug: '
 labels: bug
 assignees: ''
 
@@ -14,3 +14,4 @@ Enter information here...
 Steps to reproduce the behavior:
 
 **If possible, please send your Studio or developer console logs here.**
+Console logs here.

@@ -1,7 +1,7 @@
 ---
 name: Feature Request
 about: Request features to add to Weaver here.
-title: 'Feature:'
+title: 'Feature: '
 labels: enhancement
 assignees: ''
 

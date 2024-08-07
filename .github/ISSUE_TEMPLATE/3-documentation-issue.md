@@ -1,7 +1,7 @@
 ---
 name: Documentation Issue
 about: Use this for reporting any issues in Weaver's documentation you've found.
-title: 'Docs:'
+title: 'Docs: '
 labels: documentation
 assignees: ''
 
