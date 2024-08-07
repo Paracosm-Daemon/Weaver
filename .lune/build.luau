@@ -6,10 +6,11 @@ local Net = require("@lune/net")
 local APPLICATION_JSON: string = "application/json"
 local USER_AGENT: string = "Roblox/WinInet"
 
+local LUNE_AUTH: string = assert(Process.env.LUNE_AUTH, "Need LUNE_AUTH env to publish Weaver")
 local PUBLISH_TO: string = "18772004646"
 -- Variables
 local Asset: string = Filesystem.readFile("Weaver.rbxm")
-local Cookie: string = assert(Process.env.LUNE_AUTH, "Need LUNE_AUTH env to publish Weaver")
+local Cookie: string = `.ROBLOSECURITY={ LUNE_AUTH }`
 
 local CSRF_Headers: { [string]: any } =
 {
@@ -32,6 +33,7 @@ local CSRF_Token: string | { string } = assert(CSRF_Response.headers["x-csrf-tok
 local Upload_Headers: { [string]: any } =
 {
 	["Content-Type"] = "application/octet-stream";
+
 	["X-CSRF-Token"] = CSRF_Token;
 	["User-Agent"] = USER_AGENT;
 
