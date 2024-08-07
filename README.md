@@ -1,5 +1,5 @@
 <div align="center">
-    <a href="https://paracosm-daemon.github.io/Weaver"><img src="assets/logo/LOGO512.png" alt="Weaver" height="200" /></a>
+    <a href="https://paracosm-daemon.github.io/Weaver"><img src="assets/logo/LOGO512ROUND.png" alt="Weaver" height="200" /></a>
 </div>
 
 <div>&nbsp;</div>
