@@ -17,16 +17,46 @@ function Helpers.CreateMarker(Name: string): Marker
 	return Marker
 end
 
-function Helpers.StripMiddleware(Methods: MiddlewareCallbacks?): (MiddlewareCallbacks, number)
+function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, ...): ...any
+	local Arguments: { any }
+	local Length: number
+
+	for _, Callback: MiddlewareCallback in Callbacks do
+		Arguments =
+			if Arguments then
+				-- Simplest way of unpacking the arguments efficiently
+				{ Callback(table.unpack(Arguments, 2, Length)) }
+			else
+				{ Callback(...) }
+		Length = #Arguments
+		if Arguments[1] ~= true then
+			return table.unpack(Arguments, 2, Length)
+		end
+	end
+	if Length == 1 then
+		return nil
+	end
+	return table.unpack(Arguments, 2, Length)
+end
+--- Used for only processing a single argument via middleware for more performance
+function Helpers.ProcessSingleMiddleware(Callbacks: MiddlewareCallbacks, Argument: any): any?
+	for _, Callback: MiddlewareCallback in Callbacks do
+		local Success: boolean, Next: any = Callback(Argument)
+		if not Success then
+			return Next
+		end
+		Argument = Next
+	end
+	return Argument
+end
+
+function Helpers.StripMiddleware(Methods: MiddlewareCallbacks?): MiddlewareCallbacks
 	local Type: string = typeof(Methods)
 	assert((Type == "nil") or (Type == "table"), string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Methods", "null or table", Type))
 
 	local Stripped: MiddlewareCallbacks = {}
-	local Length: number = 0
-
 	if Methods then
-		Length = #Methods
-		for Index: number = 1, Length, 1 do
+		for Index: number = 1, #Methods, 1 do
 			local Callback: MiddlewareCallback = Methods[Index]
 			local Kind: string = typeof(Callback)
 
@@ -36,29 +66,7 @@ function Helpers.StripMiddleware(Methods: MiddlewareCallbacks?): (MiddlewareCall
 	end
 
 	table.freeze(Stripped)
-	return Stripped, Length
-end
-function Helpers.CombineMiddleware(Base: MiddlewareCallbacks, Base_Length: number, Copy: MiddlewareCallbacks?): MiddlewareCallbacks
-	local Combined_Middleware: MiddlewareCallbacks = {}
-	local Mock_Middleware: MiddlewareCallbacks, Mock_Length: number = Helpers.StripMiddleware(Copy)
-	-- Copy over the original middleware functions
-	table.move(
-		Base,
-		1,
-		Base_Length,
-		1,
-		Combined_Middleware
-	)
-	-- Then, add server-specific middleware
-	table.move(
-		Mock_Middleware,
-		1,
-		Mock_Length,
-		1 + Base_Length,
-		Combined_Middleware
-	)
-	table.freeze(Combined_Middleware)
-	return Combined_Middleware
+	return Stripped
 end
 -- Types
 export type MiddlewareCallback = (...any) -> boolean

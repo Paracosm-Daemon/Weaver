@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class Signal
 
@@ -7,6 +6,7 @@
 
 	This is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances.
 ]=]--
+-- Module
 local Signal: SignalImpl = {} :: SignalImpl
 --[=[
 	@class SignalConnection
@@ -58,7 +58,7 @@ type SignalImpl =
 	--[=[
 		Waits for the event to fire before resuming the current thread.
 	]=]--
-	Wait: (self: Signal) -> (...any);
+	Wait: (self: Signal) -> ...any;
 	-- Private
 	_Disconnect: (self: Signal, Index: any) -> ();
 }
@@ -155,7 +155,7 @@ end
 	@yields
 	@return ...any -- All of the data that the Signal returned from one event.
 ]=]--
-function Signal:Wait(): (...any)
+function Signal:Wait(): ...any
 	local Thread: thread = coroutine.running()
 	local Connection: SignalConnection
 

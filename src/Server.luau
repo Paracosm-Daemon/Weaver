@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class WeaverServer
 	@server
@@ -8,6 +7,7 @@
 
 	All of the logic here is for starting and handling services alongside the communication bridge with the client.
 ]=]--
+-- Module
 local WeaverServer = {}
 -- Modules
 local Module = script.Parent
@@ -148,6 +148,41 @@ local Waiting: number = 0
 local Running: boolean = false
 local Started: boolean = false
 -- Functions
+-- Private
+local function HookMiddleware(
+	Signal: RemoteFunction,
+	self: WeaverExposed,
+	Callback: (self: WeaverExposed, Client: Player, ...any) -> ...any,
+	Inbound: Helpers.MiddlewareCallbacks?,
+	Outbound: Helpers.MiddlewareCallbacks?
+): ()
+	if Inbound then
+		if Outbound then
+			-- Inbound & Outbound
+			Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+				return Helpers.ProcessMiddleware(Outbound, Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...)))
+			end
+			return
+		end
+		-- Inbound
+		Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+			return Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...))
+		end
+		return
+	end
+	if Outbound then
+		-- Outbound
+		Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+			return Helpers.ProcessMiddleware(Outbound, Callback(self, Invoker, ...))
+		end
+		return
+	end
+	-- None
+	Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+		return Callback(self, Invoker, ...)
+	end
+end
+-- Public
 --[=[
 	Starts Weaver.
 
@@ -163,12 +198,12 @@ function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 	assert(Mockups, Exceptions.EXCEPTION_CANT_START)
 
-	local Outbound: Helpers.MiddlewareCallbacks, Outbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
-	local Inbound: Helpers.MiddlewareCallbacks, Inbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
+	local Outbound: Helpers.MiddlewareCallbacks = Helpers.EMPTY_MIDDLEWARE
+	local Inbound: Helpers.MiddlewareCallbacks = Helpers.EMPTY_MIDDLEWARE
 
 	if Middleware then
-		Outbound, Outbound_Length = Helpers.StripMiddleware(Middleware.Outbound)
-		Inbound, Inbound_Length = Helpers.StripMiddleware(Middleware.Inbound)
+		Outbound = Helpers.StripMiddleware(Middleware.Outbound)
+		Inbound = Helpers.StripMiddleware(Middleware.Inbound)
 	end
 
 	Started = true
@@ -183,9 +218,12 @@ function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 
 		local Service_Middleware: Helpers.Middleware? = Mockup.Middleware
 		if Service_Middleware then
-			Service_Outbound = Helpers.CombineMiddleware(Outbound, Outbound_Length, Service_Middleware.Outbound)
-			Service_Inbound = Helpers.CombineMiddleware(Inbound, Inbound_Length, Service_Middleware.Inbound)
+			Service_Outbound = Helpers.StripMiddleware(Service_Middleware.Outbound)
+			Service_Inbound = Helpers.StripMiddleware(Service_Middleware.Inbound)
 		end
+
+		local Has_Outbound: boolean = Service_Outbound[1] ~= nil
+		local Has_Inbound: boolean = Service_Inbound[1] ~= nil
 
 		local Service: WeaverService = Mockup :: WeaverService
 		local Client: WeaverExposed = {} :: WeaverExposed
@@ -211,9 +249,13 @@ function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 			-- Functions are declared as RemoteFunctions in the CLient table
 			if Type == "function" then
 				local Signal: RemoteFunction = Instance.new("RemoteFunction")
-				Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
-					return Value(Client, Invoker, ...)
-				end
+				HookMiddleware(
+					Signal,
+					Client,
+					Value,
+					if Has_Inbound then Service_Inbound else nil,
+					if Has_Outbound then Service_Outbound else nil
+				)
 
 				Signal.Name = Index
 				Signal.Parent = Signals

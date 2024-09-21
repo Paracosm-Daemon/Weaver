@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class RemoteSignal
 
@@ -7,6 +6,7 @@
 
 	This is an interface meant to make using RemoteEvents much easier, with functions identical to [Signal].
 ]=]--
+-- Module
 local RemoteSignal: RemoteSignalImpl = {} :: RemoteSignalImpl
 
 RemoteSignal.__index = RemoteSignal
@@ -17,7 +17,9 @@ end
 local RunService = game:GetService("RunService")
 -- Modules
 local Internals = script.Parent
+
 local Clients = require(Internals.Clients)
+local Helpers = require(Internals.Helpers)
 -- Types
 type RemoteSignalImpl =
 {
@@ -28,7 +30,7 @@ type RemoteSignalImpl =
 	--[=[
 		Constructs a new RemoteSignal object.
 	]=]--
-	new: (Instance: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods) -> RemoteSignal;
+	new: (Instance: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal;
 	--[=[
 		On the client, fires to the server.
 
@@ -77,9 +79,6 @@ type RemoteSignalImpl =
 	@within RemoteSignal
 ]=]--
 type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
-
-type SignalMiddlewareMethod = (self: any, ...any) -> boolean
-type SignalMiddlewareMethods = { SignalMiddlewareMethod }
 --[=[
 	@private
 
@@ -109,8 +108,8 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 	_Instance: SignalListener;
 	_Event: RBXScriptSignal;
 
-	_Outbound: SignalMiddlewareMethods;
-	_Inbound: SignalMiddlewareMethods;
+	_Outbound: Helpers.MiddlewareCallbacks;
+	_Inbound: Helpers.MiddlewareCallbacks;
 
 	_Has_Outbound: boolean;
 	_Has_Inbound: boolean;
@@ -119,20 +118,16 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 local IS_SERVER: boolean = RunService:IsServer()
 -- Functions
 -- Private
-local function ProcessInbound(Inbounds: SignalMiddlewareMethods, ...): ...any
-	local Arguments: { any } = {}
-	for _, Inbound: SignalMiddlewareMethod in Inbounds do
-		Arguments = { Inbound(...) }
-		if not Arguments[1] then
-			return
-		end
+local ProcessInbound: (Inbounds: Helpers.MiddlewareCallbacks, Callback: (...any) -> (), ...any) -> ()
+if IS_SERVER then
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Callback: (Client: Player, ...any) -> (), ...): ()
+		local Client: Player = ...
+		Callback(Client, Helpers.ProcessMiddleware(Inbounds, ...))
 	end
-
-	local Length: number = #Arguments
-	return table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1)
-end
-local function Sanitize(Inbounds: SignalMiddlewareMethods, Callback: (...any) -> (), ...): ()
-	Callback(ProcessInbound(Inbounds, ...))
+else
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Callback: (...any) -> (), ...): ()
+		Callback(Helpers.ProcessMiddleware(Inbounds, ...))
+	end
 end
 -- Public
 --[=[
@@ -143,7 +138,7 @@ end
 
 	@return RemoteSignal
 ]=]--
-function RemoteSignal.new(From: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods): RemoteSignal
+function RemoteSignal.new(From: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal
 	return table.freeze(setmetatable({
 		Unreliable = From:IsA("UnreliableRemoteEvent");
 		-- Fast way of checking since it's guaranteed to be an ordered array
@@ -176,17 +171,7 @@ if IS_SERVER then
 			self._Instance:FireClient(Client, ...)
 			return
 		end
-
-		local Arguments: { any } = {}
-		for _, Outbound: SignalMiddlewareMethod in self._Outbound do
-			Arguments = { Outbound(Client, ...) }
-			if not Arguments[1] then
-				return
-			end
-		end
-
-		local Length: number = #Arguments
-		self._Instance:FireClient(Client, table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1))
+		self._Instance:FireClient(Client, Helpers.ProcessMiddleware(self._Outbound, Client, ...))
 	end
 	--[=[
 		Fires to all clients in the game.
@@ -200,7 +185,7 @@ if IS_SERVER then
 			return
 		end
 		for _, Client: Player in Clients.Array do
-			self:Fire(Client, ...)
+			self._Instance:FireClient(Client, Helpers.ProcessMiddleware(self._Outbound, Client, ...))
 		end
 	end
 	--[=[
@@ -258,17 +243,7 @@ else
 			self._Instance:FireServer(...)
 			return
 		end
-
-		local Arguments: { any } = {}
-		for _, Outbound: SignalMiddlewareMethod in self._Outbound do
-			Arguments = { Outbound(...) }
-			if not Arguments[1] then
-				return
-			end
-		end
-
-		local Length: number = #Arguments
-		self._Instance:FireServer(table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1))
+		self._Instance:FireServer(Helpers.ProcessMiddleware(self._Outbound, ...))
 	end
 end
 --[=[
@@ -284,7 +259,7 @@ function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConn
 		return self._Event:Connect(Callback)
 	end
 	return self._Event:Connect(function(...): ()
-		Sanitize(self._Inbound, Callback, ...)
+		ProcessInbound(self._Inbound, Callback, ...)
 	end)
 end
 --[=[
@@ -300,7 +275,7 @@ function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXSc
 		return self._Event:ConnectParallel(Callback)
 	end
 	return self._Event:ConnectParallel(function(...): ()
-		Sanitize(self._Inbound, Callback, ...)
+		ProcessInbound(self._Inbound, Callback, ...)
 	end)
 end
 --[=[
@@ -314,7 +289,7 @@ function RemoteSignal:Once(Callback: RemoteConnectionCallback): RBXScriptConnect
 		return self._Event:Once(Callback)
 	end
 	return self._Event:Once(function(...): ()
-		Sanitize(self._Inbound, Callback, ...)
+		ProcessInbound(self._Inbound, Callback, ...)
 	end)
 end
 --[=[
@@ -323,14 +298,14 @@ end
 	@yields
 	@return ...any -- All of the data that the RemoteSignal returned from one event.
 ]=]--
-function RemoteSignal:Wait(): (...any)
+function RemoteSignal:Wait(): ...any
 	if not self._Has_Inbound then
 		return self._Event:Wait()
 	end
-	return ProcessInbound(self._Inbound, self._Event:Wait())
+	return Helpers.ProcessMiddleware(self._Inbound, self._Event:Wait())
 end
 -- Main
 table.freeze(RemoteSignal)
 return RemoteSignal :: {
-	new: (Instance: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods) -> RemoteSignal;
+	new: (Instance: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal;
 }

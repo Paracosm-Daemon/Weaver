@@ -8,22 +8,26 @@ local Start: number = os.clock()
 
 Weaver.AddControllers(script.Runtime)
 Weaver.Start{
-	Inbound =
-	{
-		function(...): (boolean, ...any)
-			return true, ...
-		end;
-	};
 	Services =
 	{
 		test_service =
 		{
-			Outbound =
+			Inbound =
 			{
 				function(...): (boolean, ...any)
-					print("OUTBOUND INTERCEPTED:", ...)
-					print("INSTEAD SENDING 4321")
+					warn("RECEIVED", ...)
+					return true, ...
+				end;
+			};
+			Outbound =
+			{
+				function(Value: number): (boolean, number)
+					print("OUTBOUND INTERCEPTED:", Value)
+					if Value == 4 then
+						return true, Value
+					end
 
+					print("INSTEAD SENDING 4321")
 					return true, 4321
 				end;
 			};

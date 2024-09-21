@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class RemoteProperty
 
@@ -7,6 +6,7 @@
 
 	Internally, these are simply RemoteEvents which can store different values for clients.
 ]=]--
+-- Module
 local RemoteProperty: RemotePropertyImpl = {} :: RemotePropertyImpl
 
 RemoteProperty.__index = RemoteProperty
@@ -118,9 +118,10 @@ export type RemoteProperty = typeof(setmetatable({} :: {
 	_Values: { [Player]: any };
 	_Default: any?;
 
+	_Once: { [Player]: boolean }?;
 	_Threads: { thread }?;
-	_Waiting: number?;
 
+	_Waiting: number?;
 	_Instance: RemoteEvent;
 }, {} :: RemotePropertyImpl))
 -- Constants
@@ -153,9 +154,12 @@ function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 	if IS_SERVER then
 		-- These values are only set on the server
 		self._Default = Default
+
 		self._Values = {}
+		self._Once = {}
 
 		Players.PlayerRemoving:Connect(function(Client: Player): ()
+			self._Once[Client] = nil
 			task.defer(PlayerRemoving, self._Values, Client)
 		end)
 	else
@@ -190,6 +194,11 @@ function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 	setmetatable(self, RemoteProperty)
 	if IS_SERVER then
 		From.OnServerEvent:Connect(function(Client: Player): ()
+			if self._Once[Client] then
+				return
+			end
+
+			self._Once[Client] = true
 			From:FireClient(Client, self:GetFor(Client))
 		end)
 	end

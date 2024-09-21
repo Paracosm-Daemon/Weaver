@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class WeaverClient
 	@client
@@ -8,6 +7,7 @@
 
 	All of the logic here is for starting and handling controllers alongside the communication bridge with the server.
 ]=]--
+-- Module
 local WeaverClient = {}
 -- Services
 local Players = game:GetService("Players")
@@ -26,7 +26,7 @@ local Paths = require(Internals.Paths)
 -- Types
 type WeaverClientMiddleware = Helpers.Middleware & { Services: { [string]: Helpers.Middleware }? }
 --[=[
-	@type WeaverMiddlewareMethod (...any) -> (boolean, ...any)
+	@type WeaverMiddlewareMethod ...any -> (boolean, ...any)
 	@within WeaverServer
 ]=]--
 export type WeaverMiddlewareMethod = (self: WeaverController, ...any) -> (boolean, ...any)
@@ -42,7 +42,7 @@ export type WeaverMiddlewareMethods = { WeaverMiddlewareMethod }
 	@field GetAttributeChangedSignal (self: WeaverService, Attribute: string) -> RBXScriptSignal
 	@field GetAttribute (self: WeaverService, Attribute: string) -> any
 
-	@field [string] RemoteSignal | RemoteProperty | (self: WeaverService, ...any) -> (...any)
+	@field [string] RemoteSignal | RemoteProperty | (self: WeaverService, ...any) -> ...any
 ]=]--
 export type WeaverService =
 {
@@ -54,7 +54,7 @@ export type WeaverService =
 	GetAttribute: (self: WeaverService, Attribute: string) -> any;
 	GetAttributes: (self: WeaverService) -> { [string]: any };
 
-	[string]: RemoteSignal.RemoteSignal | RemoteProperty.RemoteProperty | (self: WeaverService, ...any) -> (...any);
+	[string]: RemoteSignal.RemoteSignal | RemoteProperty.RemoteProperty | (self: WeaverService, ...any) -> ...any;
 }
 --[=[
 	The type used for all controllers.
@@ -85,8 +85,8 @@ local Controllers: { [string]: WeaverController } = {}
 local Services: { [string]: WeaverService } = {}
 local Standby: { [string]: { thread } } = {}
 
-local Outbound: WeaverMiddlewareMethods, Outbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
-local Inbound: WeaverMiddlewareMethods, Inbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
+local Outbound: WeaverMiddlewareMethods = Helpers.EMPTY_MIDDLEWARE
+local Inbound: WeaverMiddlewareMethods = Helpers.EMPTY_MIDDLEWARE
 
 local Service_Middleware: { [string]: { WeaverMiddlewareMethods } } = {}
 local Queue: { thread } = {}
@@ -130,6 +130,34 @@ local function FindBridge(): Folder
 
 	return Located
 end
+local function HookMiddleware(
+	Signal: RemoteFunction,
+	Service_Inbound: Helpers.MiddlewareCallbacks?,
+	Service_Outbound: Helpers.MiddlewareCallbacks?
+): (self: WeaverService, ...any) -> ...any
+	if Service_Outbound then
+		if Service_Inbound then
+			-- Inbound & Outbound
+			return function(_self: WeaverService, ...): ...any
+				return Helpers.ProcessMiddleware(Service_Inbound, Signal:InvokeServer(Helpers.ProcessMiddleware(Service_Outbound, ...)))
+			end
+		end
+		-- Outbound
+		return function(_self: WeaverService, ...): ...any
+			return Signal:InvokeServer(Helpers.ProcessMiddleware(Service_Outbound, ...))
+		end
+	end
+	if Service_Inbound then
+		-- Inbound
+		return function(_self: WeaverService, ...): ...any
+			return Helpers.ProcessMiddleware(Service_Inbound, Signal:InvokeServer(...))
+		end
+	end
+	-- None
+	return function(_self: WeaverService, ...): ...any
+		return Signal:InvokeServer(...)
+	end
+end
 -- Public
 --[=[
 	Starts Weaver.
@@ -145,8 +173,8 @@ end
 function WeaverClient.Start(Middleware: WeaverClientMiddleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 	if Middleware then
-		Outbound, Outbound_Length = Helpers.StripMiddleware(Middleware.Outbound)
-		Inbound, Inbound_Length = Helpers.StripMiddleware(Middleware.Inbound)
+		Outbound = Helpers.StripMiddleware(Middleware.Outbound)
+		Inbound = Helpers.StripMiddleware(Middleware.Inbound)
 
 		local Services_Middleware: { [string]: Helpers.Middleware }? = Middleware.Services
 		if Services_Middleware then
@@ -155,8 +183,8 @@ function WeaverClient.Start(Middleware: WeaverClientMiddleware?): ()
 				local Service_Inbound: WeaverMiddlewareMethods = Inbound
 
 				if Service_Methods then
-					Service_Outbound = Helpers.CombineMiddleware(Outbound, Outbound_Length, Service_Methods.Outbound)
-					Service_Inbound = Helpers.CombineMiddleware(Inbound, Inbound_Length, Service_Methods.Inbound)
+					Service_Outbound = Helpers.StripMiddleware(Service_Methods.Outbound)
+					Service_Inbound = Helpers.StripMiddleware(Service_Methods.Inbound)
 				end
 				Service_Middleware[Service] = { Service_Inbound, Service_Outbound }
 			end
@@ -295,23 +323,27 @@ function WeaverClient.GetService(Name: string): WeaverService
 	local Service_Outbound: WeaverMiddlewareMethods = if Middleware then Middleware[2] else Outbound
 	local Service_Inbound: WeaverMiddlewareMethods = if Middleware then Middleware[1] else Inbound
 
+	local Has_Outbound: boolean = Service_Outbound[1] ~= nil
+	local Has_Inbound: boolean = Service_Inbound[1] ~= nil
+
 	for _, Child: Instance in Signals:GetChildren() do
 		if Child:IsA("RemoteEvent") or Child:IsA("UnreliableRemoteEvent") then
 			Service[Child.Name] = RemoteSignal.new(Child :: RemoteSignal.SignalListener, Service_Inbound, Service_Outbound)
 			continue
 		end
 		if Child:IsA("RemoteFunction") then
-			Service[Child.Name] = function(_self: WeaverService, ...): (...any)
-				return Child:InvokeServer(...)
-			end
-			continue
+			Service[Child.Name] = HookMiddleware(
+				Child,
+				if Has_Inbound then Service_Inbound else nil,
+				if Has_Outbound then Service_Outbound else nil
+			)
 		end
 	end
 	for _, Child: Instance in Props:GetChildren() do
 		if not Child:IsA("RemoteEvent") then
 			continue
 		end
-		Service[Child.Name] = RemoteProperty.new(Child)
+		Service[Child.Name] = RemoteProperty.new(Child, nil)
 	end
 	-- Define only GetAttribute(s)/GetAttributeChangedSignal
 	function Service:GetAttribute(Attribute: string): any
