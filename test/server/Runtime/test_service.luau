@@ -26,7 +26,14 @@ Module.Client.TestProperty = DEFAULT_PROPERTY_VALUE
 Module.Attributes.TestAttribute = "foo"
 Module.Middleware =
 {
-	-- Inbound
+	Inbound = function(Client: Player, ...): (boolean, ...any)
+		print(`Sent by { Client }:`, ...)
+		return true, ...
+	end;
+	Outbound = function(Client: Player, ...): (boolean, ...any)
+		print("SERVER OUTBOUND:", Client, ...)
+		return true, ...
+	end;
 }
 -- Functions
 -- Client
