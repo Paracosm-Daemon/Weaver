@@ -39,6 +39,16 @@ end
 
 function Module:WeaverInit(): ()
 	Tester:Latch(function(Free): ()
+		self.Client.TestProperty.Changed:Once(function(For: Player?, Value: any): ()
+			local Type: string = typeof(For)
+
+			assert(For and (Type == "Instance") and For:IsA("Player"), string.format(EXCEPTION_PARAM_ERROR, 2, "TestProperty", "Player", Type, tostring(For)))
+			assert(Value == nil, string.format(EXCEPTION_PARAM_ERROR, 2, "TestProperty", "null", typeof(Value), tostring(Value)))
+
+			Free()
+		end)
+	end, "TestProperty Changed")
+	Tester:Latch(function(Free): ()
 		local Value: any? = self:GetAttribute(EXPECTED_ATTRIBUTE_NAME)
 		assert(Value == EXPECTED_ATTRIBUTE_VALUE, string.format(EXCEPTION_UNEXPECTED_ATTRIBUTE, typeof(Value), tostring(Value)))
 
