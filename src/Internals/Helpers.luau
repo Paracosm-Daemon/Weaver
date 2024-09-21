@@ -5,7 +5,7 @@
 
 	@class Helpers
 
-	Weaver's general utility module
+	Weaver's general utility module to bridge boilerplate between the server and client
 ]=]--
 -- Modules
 local Internals = script.Parent
@@ -17,6 +17,11 @@ local Helpers =
 	NONE = newproxy(false);
 }
 -- Functions
+--[=[
+	Creates a marker with the specified `Name`
+
+	@param Name string
+]=]--
 function Helpers.CreateMarker(Name: string): Marker
 	local Marker: Marker = newproxy(true)
 	getmetatable(Marker).__tostring = function(_self: { [any]: any }): string
@@ -26,6 +31,8 @@ function Helpers.CreateMarker(Name: string): Marker
 end
 --[=[
 	Used for processing inbound/outbound functions with multiple arguments
+
+	@yields
 
 	@param Callbacks MiddlewareCallbacks
 	@param ... ...any
@@ -54,6 +61,8 @@ end
 --[=[
 	Used for only processing a single argument via middleware for more performance
 
+	@yields
+
 	@param Callbacks MiddlewareCallbacks
 	@param Argument any?
 ]=]--
@@ -67,7 +76,12 @@ function Helpers.ProcessSingleMiddleware(Callbacks: MiddlewareCallbacks, Argumen
 	end
 	return Argument
 end
+--[=[
+	Strips the given `Methods` into an ordered array of `MiddlewareCallback`s
 
+	@param Methods (MiddlewareCallback | MiddlewareCallbacks)?
+	@return MiddlewareCallbacks
+]=]--
 function Helpers.StripMiddleware(Methods: (MiddlewareCallback | MiddlewareCallbacks)?): MiddlewareCallbacks
 	local Type: string = typeof(Methods)
 	assert(
