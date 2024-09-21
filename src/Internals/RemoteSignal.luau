@@ -52,19 +52,19 @@ type RemoteSignalImpl =
 	]=]--
 	FireFilter: (self: RemoteSignal, Filter: (Client: Player, ...any) -> boolean, ...any) -> ();
 	--[=[
-		Connects `Callback` to this signal.
+		Connects `Callback` to this RemoteSignal.
 
-		Executes when a client fires this signal to the server, or vice versa.
+		Executes when a client fires this RemoteSignal to the server, or vice versa.
 	]=]--
 	Connect: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
-		Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+		Connects `Callback` to this RemoteSignal in parallel. Useful with Parallel Luau.
 
-		Executes when a client fires this signal to the server, or vice versa.
+		Executes when a client fires this RemoteSignal to the server, or vice versa.
 	]=]--
 	ConnectParallel: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
-		Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+		Connects `Callback` to this RemoteSignal, disconnecting it once the RemoteSignal has fired once.
 	]=]--
 	Once: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
@@ -206,9 +206,9 @@ else
 	end
 end
 --[=[
-	Connects `Callback` to this signal.
+	Connects `Callback` to this RemoteSignal.
 
-	Executes when a client fires this signal to the server, or vice versa.
+	Executes when a client fires this RemoteSignal to the server, or vice versa.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
@@ -217,9 +217,9 @@ function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConn
 	return self._Event:Connect(Callback)
 end
 --[=[
-	Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+	Connects `Callback` to this RemoteSignal in parallel. Useful with Parallel Luau.
 
-	Executes when a client fires this signal to the server, or vice versa.
+	Executes when a client fires this RemoteSignal to the server, or vice versa.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
@@ -228,7 +228,7 @@ function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXSc
 	return self._Event:ConnectParallel(Callback)
 end
 --[=[
-	Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+	Connects `Callback` to this RemoteSignal, disconnecting it once the RemoteSignal has fired once.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
@@ -240,7 +240,7 @@ end
 	Waits for the event to fire before resuming the current thread.
 
 	@yields
-	@return ...any -- All of the data that the signal returned from one event.
+	@return ...any -- All of the data that the RemoteSignal returned from one event.
 ]=]--
 function RemoteSignal:Wait(): (...any)
 	return self._Event:Wait()
