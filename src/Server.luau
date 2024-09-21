@@ -160,7 +160,7 @@ local function HookMiddleware(
 		if Outbound then
 			-- Inbound & Outbound
 			Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
-				return Helpers.ProcessMiddleware(Outbound, Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...)))
+				return Helpers.ProcessMiddleware(Outbound, Invoker, Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...)))
 			end
 			return
 		end
@@ -173,7 +173,7 @@ local function HookMiddleware(
 	if Outbound then
 		-- Outbound
 		Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
-			return Helpers.ProcessMiddleware(Outbound, Callback(self, Invoker, ...))
+			return Helpers.ProcessMiddleware(Outbound, Invoker, Callback(self, Invoker, ...))
 		end
 		return
 	end
