@@ -74,11 +74,12 @@ type RemoteSignalImpl =
 	]=]--
 	Wait: (self: RemoteSignal) -> (...any);
 }
+type BaseRemoteConnection = (...any) -> ()
 --[=[
 	@type RemoteConnectionCallback (...any) -> () | (Client: Player, ...any)
 	@within RemoteSignal
 ]=]--
-type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
+type RemoteConnectionCallback = BaseRemoteConnection | (Client: Player, ...any) -> ()
 --[=[
 	@private
 
@@ -118,15 +119,14 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 local IS_SERVER: boolean = RunService:IsServer()
 -- Functions
 -- Private
-local ProcessInbound: (Inbounds: Helpers.MiddlewareCallbacks, Callback: (...any) -> (), ...any) -> ()
+local ProcessInbound: (Inbounds: Helpers.MiddlewareCallbacks, ...any) -> ...any
 if IS_SERVER then
-	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Callback: (Client: Player, ...any) -> (), ...): ()
-		local Client: Player = ...
-		Callback(Client, Helpers.ProcessMiddleware(Inbounds, ...))
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Client: Player, ...): (Player, ...any)
+		return Client, Helpers.ProcessMiddleware(Inbounds, Client, ...)
 	end
 else
-	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Callback: (...any) -> (), ...): ()
-		Callback(Helpers.ProcessMiddleware(Inbounds, ...))
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, ...): ...any
+		return Helpers.ProcessMiddleware(Inbounds, ...)
 	end
 end
 -- Public
@@ -259,7 +259,7 @@ function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConn
 		return self._Event:Connect(Callback)
 	end
 	return self._Event:Connect(function(...): ()
-		ProcessInbound(self._Inbound, Callback, ...)
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
 	end)
 end
 --[=[
@@ -275,7 +275,7 @@ function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXSc
 		return self._Event:ConnectParallel(Callback)
 	end
 	return self._Event:ConnectParallel(function(...): ()
-		ProcessInbound(self._Inbound, Callback, ...)
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
 	end)
 end
 --[=[
@@ -289,7 +289,7 @@ function RemoteSignal:Once(Callback: RemoteConnectionCallback): RBXScriptConnect
 		return self._Event:Once(Callback)
 	end
 	return self._Event:Once(function(...): ()
-		ProcessInbound(self._Inbound, Callback, ...)
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
 	end)
 end
 --[=[
@@ -302,7 +302,7 @@ function RemoteSignal:Wait(): ...any
 	if not self._Has_Inbound then
 		return self._Event:Wait()
 	end
-	return Helpers.ProcessMiddleware(self._Inbound, self._Event:Wait())
+	return ProcessInbound(self._Inbound, self._Event:Wait())
 end
 -- Main
 table.freeze(RemoteSignal)
