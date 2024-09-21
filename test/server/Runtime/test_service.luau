@@ -24,6 +24,10 @@ Module.Client.TestSignal = Weaver.CreateRemoteSignal()
 Module.Client.TestProperty = DEFAULT_PROPERTY_VALUE
 
 Module.Attributes.TestAttribute = "foo"
+Module.Middleware =
+{
+	-- Inbound
+}
 -- Functions
 -- Client
 function Module.Client:Frobulate(Client: Player, Frobulations: number): number

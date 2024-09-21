@@ -50,14 +50,21 @@ function Helpers.ProcessSingleMiddleware(Callbacks: MiddlewareCallbacks, Argumen
 	return Argument
 end
 
-function Helpers.StripMiddleware(Methods: MiddlewareCallbacks?): MiddlewareCallbacks
+function Helpers.StripMiddleware(Methods: (MiddlewareCallback | MiddlewareCallbacks)?): MiddlewareCallbacks
 	local Type: string = typeof(Methods)
-	assert((Type == "nil") or (Type == "table"), string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Methods", "null or table", Type))
+	assert(
+		(Type == "nil") or (Type == "table") or (Type == "function"),
+		string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Methods", "null, table, or function", Type)
+	)
+
+	if Type == "function" then
+		return table.freeze{ Methods :: MiddlewareCallback }
+	end
 
 	local Stripped: MiddlewareCallbacks = {}
-	if Methods then
-		for Index: number = 1, #Methods, 1 do
-			local Callback: MiddlewareCallback = Methods[Index]
+	if Type == "table" then
+		for Index: number = 1, #(Methods :: MiddlewareCallbacks), 1 do
+			local Callback: MiddlewareCallback = (Methods :: MiddlewareCallbacks)[Index]
 			local Kind: string = typeof(Callback)
 
 			assert(Kind == "function", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Middleware Method", "function", Kind))
@@ -72,7 +79,7 @@ end
 export type MiddlewareCallback = (...any) -> boolean
 export type MiddlewareCallbacks = { MiddlewareCallback }
 
-export type Middleware = { Inbound: MiddlewareCallbacks?, Outbound: MiddlewareCallbacks? }
+export type Middleware = { Inbound: (MiddlewareCallback | MiddlewareCallbacks)?, Outbound: (MiddlewareCallback | MiddlewareCallbacks)? }
 
 export type Marker = typeof(newproxy(false))
 export type None = typeof(Helpers.NONE)
