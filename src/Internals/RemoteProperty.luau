@@ -140,8 +140,11 @@ function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 		self._Default = Default
 		self._Values = {}
 
-		Players.PlayerRemoving:Connect(function(Client: Player): ()
+		local function PlayerRemoving(Client: Player): ()
 			self._Values[Client] = nil
+		end
+		Players.PlayerRemoving:Connect(function(Client: Player): ()
+			task.defer(PlayerRemoving, Client)
 		end)
 	else
 		local Threads: { thread } = {}
