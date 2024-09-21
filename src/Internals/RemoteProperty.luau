@@ -95,6 +95,16 @@ type RemotePropertyImpl =
 ]=]--
 type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
 --[=[
+	Fires when the RemoteProperty's value has changed for any player. The first parameter will always be the `Player`.
+
+	If the default value for the RemoteProperty was changed rather than a specific player's value, the first parameter will be `nil`.
+
+	@server
+
+	@prop Changed Signal
+	@within RemoteProperty
+]=]--
+--[=[
 	Fires when the RemoteProperty's value has changed. Note that this won't fire if the value that the server sets is the same as your currently registered value.
 
 	@client
@@ -105,7 +115,7 @@ type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
 export type RemoteProperty = typeof(setmetatable({} :: {
 	Changed: Signal.Signal;
 
-	_Values: { [Player]: any? };
+	_Values: { [Player]: any };
 	_Default: any?;
 
 	_Threads: { thread }?;
@@ -120,6 +130,9 @@ local IS_SERVER: boolean = RunService:IsServer()
 local function GetValue(Value: any?): any?
 	return if Value == Helpers.NONE then nil else Value
 end
+local function PlayerRemoving(Values: { [Player]: any }, Client: Player): ()
+	Values[Client] = nil
+end
 -- Public
 --[=[
 	Constructs a new RemoteProperty object.
@@ -133,18 +146,17 @@ end
 function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 	local self =
 	{
+		Changed = Signal.new();
 		_Instance = From;
 	}
+
 	if IS_SERVER then
 		-- These values are only set on the server
 		self._Default = Default
 		self._Values = {}
 
-		local function PlayerRemoving(Client: Player): ()
-			self._Values[Client] = nil
-		end
 		Players.PlayerRemoving:Connect(function(Client: Player): ()
-			task.defer(PlayerRemoving, Client)
+			task.defer(PlayerRemoving, self._Values, Client)
 		end)
 	else
 		local Threads: { thread } = {}
@@ -152,7 +164,6 @@ function RemoteProperty.new(From: RemoteEvent, Default: any?): RemoteProperty
 		self._Threads = Threads :: { thread }?
 		self._Waiting = 0 :: number?
 
-		self.Changed = Signal.new()
 		From.OnClientEvent:Connect(function(Value: any?): ()
 			local Last: any? = self._Default
 			self._Default = if Value == nil then Helpers.NONE else Value
@@ -211,6 +222,8 @@ if IS_SERVER then
 		end
 
 		self._Default = Default
+		self.Changed:Fire(nil, Default)
+
 		for _, Client: Player in Clients.Array do
 			if self._Values[Client] then
 				continue
@@ -234,6 +247,8 @@ if IS_SERVER then
 
 		self._Values[For] = New
 		self._Instance:FireClient(For, Value)
+
+		self.Changed:Fire(For, Value)
 	end
 	--[=[
 		Sets the value of this RemoteProperty for the clients specified.
