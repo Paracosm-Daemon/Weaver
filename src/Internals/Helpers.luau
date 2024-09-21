@@ -5,7 +5,7 @@
 
 	@class Helpers
 
-	Weaver's general utility module to bridge boilerplate between the server and client
+	Weaver's general utility module to bridge boilerplate between the server and client.
 ]=]--
 -- Modules
 local Internals = script.Parent

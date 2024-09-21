@@ -27,7 +27,7 @@ local Paths = require(Internals.Paths)
 type WeaverClientMiddleware = Helpers.Middleware & { Services: { [string]: Helpers.Middleware }? }
 --[=[
 	@type WeaverMiddlewareMethod ...any -> (boolean, ...any)
-	@within WeaverServer
+	@within WeaverClient
 ]=]--
 export type WeaverMiddlewareMethod = (self: WeaverController, ...any) -> (boolean, ...any)
 export type WeaverMiddlewareMethods = { WeaverMiddlewareMethod }
@@ -77,6 +77,16 @@ export type WeaverController =
 	WeaverStart: (self: WeaverController) -> ()?;
 	WeaverInit: (self: WeaverController) -> ()?;
 }
+--[=[
+	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (boolean, ...any)
+	@within WeaverClient
+]=]--
+--[=[
+	[Middleware](/docs/communication/middleware) used by the client.
+
+	@type WeaverMiddleware WeaverMiddlewareCallback | { WeaverMiddlewareCallback }
+	@within WeaverClient
+]=]--
 -- Constants
 local CLIENT: Player = Players.LocalPlayer
 -- Variables
@@ -162,6 +172,8 @@ end
 --[=[
 	Starts Weaver.
 
+	If any middleware is provided, it will be used as as the default if no services have their own within the optional `Services` table.
+
 	:::caution
 
 	This will throw an error if Weaver is already started.
@@ -169,6 +181,7 @@ end
 	:::
 
 	@yields
+	@param Middleware { Inbound: WeaverMiddleware?, Outbound: WeaverMiddleware?, Services: { [string]: { Inbound: WeaverMiddleware?, Outbound: WeaverMiddleware? } }? }?
 ]=]--
 function WeaverClient.Start(Middleware: WeaverClientMiddleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)

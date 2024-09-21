@@ -115,6 +115,16 @@ export type WeaverService =
 	WeaverStart: (self: WeaverService) -> ()?;
 	WeaverInit: (self: WeaverService) -> ()?;
 }
+--[=[
+	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (boolean, ...any)
+	@within WeaverServer
+]=]--
+--[=[
+	[Middleware](/docs/communication/middleware) used by the server.
+
+	@type WeaverMiddleware WeaverMiddlewareCallback | { WeaverMiddlewareCallback }
+	@within WeaverServer
+]=]--
 -- Constants
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
@@ -186,6 +196,8 @@ end
 --[=[
 	Starts Weaver.
 
+	If any middleware is provided, it will be used as as the default if no services provide their own.
+
 	:::caution
 
 	This will throw an error if Weaver has already started.
@@ -193,6 +205,7 @@ end
 	:::
 
 	@yields
+	@param Middleware { Inbound: WeaverMiddleware?, Outbound: WeaverMiddleware? }?
 ]=]--
 function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
