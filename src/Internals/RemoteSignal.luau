@@ -28,7 +28,7 @@ type RemoteSignalImpl =
 	--[=[
 		Constructs a new RemoteSignal object.
 	]=]--
-	new: (Instance: SignalListener) -> RemoteSignal;
+	new: (Instance: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods) -> RemoteSignal;
 	--[=[
 		On the client, fires to the server.
 
@@ -77,6 +77,9 @@ type RemoteSignalImpl =
 	@within RemoteSignal
 ]=]--
 type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
+
+type SignalMiddlewareMethod = (self: any, ...any) -> boolean
+type SignalMiddlewareMethods = { SignalMiddlewareMethod }
 --[=[
 	@private
 
@@ -105,10 +108,33 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 
 	_Instance: SignalListener;
 	_Event: RBXScriptSignal;
+
+	_Outbound: SignalMiddlewareMethods;
+	_Inbound: SignalMiddlewareMethods;
+
+	_Has_Outbound: boolean;
+	_Has_Inbound: boolean;
 }, {} :: RemoteSignalImpl))
 -- Constants
 local IS_SERVER: boolean = RunService:IsServer()
 -- Functions
+-- Private
+local function ProcessInbound(Inbounds: SignalMiddlewareMethods, ...): ...any
+	local Arguments: { any } = {}
+	for _, Inbound: SignalMiddlewareMethod in Inbounds do
+		Arguments = { Inbound(...) }
+		if not Arguments[1] then
+			return
+		end
+	end
+
+	local Length: number = #Arguments
+	return table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1)
+end
+local function Sanitize(Inbounds: SignalMiddlewareMethods, Callback: (...any) -> (), ...): ()
+	Callback(ProcessInbound(Inbounds, ...))
+end
+-- Public
 --[=[
 	Constructs a new RemoteSignal object.
 
@@ -117,9 +143,15 @@ local IS_SERVER: boolean = RunService:IsServer()
 
 	@return RemoteSignal
 ]=]--
-function RemoteSignal.new(From: SignalListener): RemoteSignal
+function RemoteSignal.new(From: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods): RemoteSignal
 	return table.freeze(setmetatable({
 		Unreliable = From:IsA("UnreliableRemoteEvent");
+		-- Fast way of checking since it's guaranteed to be an ordered array
+		_Has_Outbound = Outbound[1] ~= nil;
+		_Has_Inbound = Inbound[1] ~= nil;
+
+		_Outbound = Outbound;
+		_Inbound = Inbound;
 
 		_Instance = From;
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
@@ -140,7 +172,21 @@ if IS_SERVER then
 	]=]--
 	function RemoteSignal:Fire(Client: Player, ...): ()
 		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
-		self._Instance:FireClient(Client, ...)
+		if not self._Has_Outbound then
+			self._Instance:FireClient(Client, ...)
+			return
+		end
+
+		local Arguments: { any } = {}
+		for _, Outbound: SignalMiddlewareMethod in self._Outbound do
+			Arguments = { Outbound(Client, ...) }
+			if not Arguments[1] then
+				return
+			end
+		end
+
+		local Length: number = #Arguments
+		self._Instance:FireClient(Client, table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1))
 	end
 	--[=[
 		Fires to all clients in the game.
@@ -149,7 +195,13 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireAll(...): ()
-		self._Instance:FireAllClients(...)
+		if not self._Has_Outbound then
+			self._Instance:FireAllClients(...)
+			return
+		end
+		for _, Client: Player in Clients.Array do
+			self:Fire(Client, ...)
+		end
 	end
 	--[=[
 		Fires to all clients specified in `For`.
@@ -202,7 +254,21 @@ else
 		@param ... ...any -- The arguments to send over this RemoteSignal.
 	]=]--
 	function RemoteSignal:Fire(...): ()
-		self._Instance:FireServer(...)
+		if not self._Has_Outbound then
+			self._Instance:FireServer(...)
+			return
+		end
+
+		local Arguments: { any } = {}
+		for _, Outbound: SignalMiddlewareMethod in self._Outbound do
+			Arguments = { Outbound(...) }
+			if not Arguments[1] then
+				return
+			end
+		end
+
+		local Length: number = #Arguments
+		self._Instance:FireServer(table.unpack(table.move(Arguments, 2, Length, 1, {}), 1, Length - 1))
 	end
 end
 --[=[
@@ -214,7 +280,12 @@ end
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:Connect(Callback)
+	if not self._Has_Inbound then
+		return self._Event:Connect(Callback)
+	end
+	return self._Event:Connect(function(...): ()
+		Sanitize(self._Inbound, Callback, ...)
+	end)
 end
 --[=[
 	Connects `Callback` to this RemoteSignal in parallel. Useful with Parallel Luau.
@@ -225,7 +296,12 @@ end
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:ConnectParallel(Callback)
+	if not self._Has_Inbound then
+		return self._Event:ConnectParallel(Callback)
+	end
+	return self._Event:ConnectParallel(function(...): ()
+		Sanitize(self._Inbound, Callback, ...)
+	end)
 end
 --[=[
 	Connects `Callback` to this RemoteSignal, disconnecting it once the RemoteSignal has fired once.
@@ -234,7 +310,12 @@ end
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:Once(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:Once(Callback)
+	if not self._Has_Inbound then
+		return self._Event:Once(Callback)
+	end
+	return self._Event:Once(function(...): ()
+		Sanitize(self._Inbound, Callback, ...)
+	end)
 end
 --[=[
 	Waits for the event to fire before resuming the current thread.
@@ -243,9 +324,13 @@ end
 	@return ...any -- All of the data that the RemoteSignal returned from one event.
 ]=]--
 function RemoteSignal:Wait(): (...any)
-	return self._Event:Wait()
+	if not self._Has_Inbound then
+		return self._Event:Wait()
+	end
+	return ProcessInbound(self._Inbound, self._Event:Wait())
 end
 -- Main
-return table.freeze(RemoteSignal) :: {
-	new: (Instance: SignalListener) -> RemoteSignal;
+table.freeze(RemoteSignal)
+return RemoteSignal :: {
+	new: (Instance: SignalListener, Inbound: SignalMiddlewareMethods, Outbound: SignalMiddlewareMethods) -> RemoteSignal;
 }

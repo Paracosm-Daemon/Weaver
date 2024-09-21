@@ -12,6 +12,8 @@ local EXCEPTION_UNEXPECTED_ATTRIBUTE: string = `{ EXPECTED_ATTRIBUTE_NAME } is n
 local EXCEPTION_PARAM_ERROR: string = "Param %d of %s is not %s! Got type %s with value %s"
 
 local EXCEPTION_UNEXPECTED_PROPERTY: string = "TestProperty value for %s is not %s! Got type %s with value %s"
+
+local EXPECTED_SIGNAL_VALUE: number = 4321
 local DEFAULT_PROPERTY_VALUE: number = 0
 -- Service
 local Module = Weaver.CreateService{ Name = script.Name }
@@ -59,9 +61,9 @@ function Module:WeaverInit(): ()
 			assert(Client:IsA("Player"), string.format(EXCEPTION_PARAM_ERROR, 1, "TestSignal", "Player", typeof(Client), tostring(Client)))
 
 			local Type: string = typeof(Input)
-			assert(Type == "number", string.format(EXCEPTION_PARAM_ERROR, 2, "TestSignal", "number", Type, tostring(Input)))
+			assert((Type == "number") and (Input == EXPECTED_SIGNAL_VALUE), string.format(EXCEPTION_PARAM_ERROR, 2, "TestSignal", `number with value { EXPECTED_SIGNAL_VALUE }`, Type, tostring(Input)))
 
-			self.Client.TestSignal:Fire(Client, 4321)
+			self.Client.TestSignal:Fire(Client, EXPECTED_SIGNAL_VALUE)
 			Free()
 		end)
 	end, "RemoteSignal Connect")

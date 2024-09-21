@@ -4,21 +4,16 @@
 	so I've implemented connections to store all clients
 ]]--
 -- Module
-local Clients =
-{
-	Connected = 0;
-
-	Map = {} :: { [Player]: number };
-	Array = {} :: { Player };
-}
+local Clients = {}
 -- Services
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 -- Main
 if RunService:IsServer() then
-	Clients.Array = Players:GetPlayers()
+	Clients.Array = Players:GetPlayers() :: { Player }
 	Clients.Connected = #Clients.Array
 
+	Clients.Map = {} :: { [Player]: number }
 	Players.PlayerRemoving:Connect(function(Client: Player): ()
 		local Index: number? = Clients.Map[Client]
 		if not Index then

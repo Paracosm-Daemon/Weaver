@@ -22,7 +22,7 @@ local Exceptions = require(Internals.Exceptions)
 local Helpers = require(Internals.Helpers)
 local Paths = require(Internals.Paths)
 -- Types
-type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
+type MarkerMethod = (Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal.RemoteSignal
 type WeaverAttributes = { [string]: any }
 --[=[
 	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
@@ -52,7 +52,9 @@ type WeaverMockService =
 	Attributes: WeaverAttributes;
 	Client: WeaverMockExposed;
 
+	Middleware: Helpers.Middleware?;
 	Name: string;
+
 	[any]: any;
 	-- Methods
 	WeaverStart: (self: WeaverService) -> ()?;
@@ -119,21 +121,21 @@ local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL
 
 local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 {
-	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
+	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal.RemoteSignal
 		local Signal: RemoteEvent = Instance.new("RemoteEvent")
 
 		Signal.Name = Name
 		Signal.Parent = Communication
 
-		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener)
+		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener, Inbound, Outbound)
 	end;
-	[UNRELIABLE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
+	[UNRELIABLE_SIGNAL_MARKER] = function(Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal.RemoteSignal
 		local Signal: UnreliableRemoteEvent = Instance.new("UnreliableRemoteEvent")
 
 		Signal.Name = Name
 		Signal.Parent = Communication
 
-		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener)
+		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener, Inbound, Outbound)
 	end;
 }
 -- Variables
@@ -146,8 +148,6 @@ local Waiting: number = 0
 local Running: boolean = false
 local Started: boolean = false
 -- Functions
--- Private
--- Public
 --[=[
 	Starts Weaver.
 
@@ -159,9 +159,17 @@ local Started: boolean = false
 
 	@yields
 ]=]--
-function WeaverServer.Start(): ()
+function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 	assert(Mockups, Exceptions.EXCEPTION_CANT_START)
+
+	local Outbound: Helpers.MiddlewareCallbacks, Outbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
+	local Inbound: Helpers.MiddlewareCallbacks, Inbound_Length: number = Helpers.EMPTY_MIDDLEWARE, 0
+
+	if Middleware then
+		Outbound, Outbound_Length = Helpers.StripMiddleware(Middleware.Outbound)
+		Inbound, Inbound_Length = Helpers.StripMiddleware(Middleware.Inbound)
+	end
 
 	Started = true
 	table.freeze(Mockups)
@@ -170,6 +178,15 @@ function WeaverServer.Start(): ()
 	Communication.Name = Paths.ORIGIN
 	-- Initialize the signals before parenting the Communication folder
 	for Name: string, Mockup: WeaverMockService in Mockups do
+		local Service_Outbound: Helpers.MiddlewareCallbacks = Outbound
+		local Service_Inbound: Helpers.MiddlewareCallbacks = Inbound
+
+		local Service_Middleware: Helpers.Middleware? = Mockup.Middleware
+		if Service_Middleware then
+			Service_Outbound = Helpers.CombineMiddleware(Outbound, Outbound_Length, Service_Middleware.Outbound)
+			Service_Inbound = Helpers.CombineMiddleware(Inbound, Inbound_Length, Service_Middleware.Inbound)
+		end
+
 		local Service: WeaverService = Mockup :: WeaverService
 		local Client: WeaverExposed = {} :: WeaverExposed
 
@@ -211,7 +228,7 @@ function WeaverServer.Start(): ()
 					continue
 				end
 
-				Client[Index] = Instantiate(tostring(Index), Signals)
+				Client[Index] = Instantiate(tostring(Index), Signals, Service_Inbound, Service_Outbound)
 				continue
 			end
 			-- Assign other types to a RemoteProperty, since they're defined in the Client table
@@ -451,4 +468,6 @@ end
 	@readonly
 ]=]--
 WeaverServer.Util = Util
-return table.freeze(WeaverServer)
+table.freeze(WeaverServer)
+
+return WeaverServer
