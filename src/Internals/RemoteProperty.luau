@@ -391,6 +391,7 @@ else
 	end
 end
 -- Main
-return table.freeze(RemoteProperty) :: {
+table.freeze(RemoteProperty)
+return RemoteProperty :: {
 	new: (Instance: RemoteEvent, Default: any?) -> RemoteProperty;
 }

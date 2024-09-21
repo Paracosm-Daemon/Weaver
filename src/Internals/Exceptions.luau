@@ -1,5 +1,6 @@
 --!strict
-return table.freeze{
+-- Module
+local Module = table.freeze{
 	EXCEPTION_BEFORE_START = "%s cannot be added after Weaver has started";
 	EXCEPTION_MUST_BE_TYPE = "%s must be of type %s, got %s";
 
@@ -11,3 +12,5 @@ return table.freeze{
 	EXCEPTION_NEED_USE_START = "Weaver must be started to use %s";
 	EXCEPTION_HAS_STARTED = "Weaver has already started";
 }
+-- Main
+return Module

@@ -184,6 +184,7 @@ function SignalConnection:Disconnect(): ()
 	self._Ref[self] = nil
 end
 -- Main
-return table.freeze(Signal) :: {
+table.freeze(Signal)
+return Signal :: {
 	new: () -> Signal;
 }
