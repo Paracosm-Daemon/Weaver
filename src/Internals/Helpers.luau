@@ -1,4 +1,12 @@
 --!strict
+--[=[
+	@private
+	@ignore
+
+	@class Helpers
+
+	Weaver's general utility module
+]=]--
 -- Modules
 local Internals = script.Parent
 local Exceptions = require(Internals.Exceptions)
@@ -16,7 +24,12 @@ function Helpers.CreateMarker(Name: string): Marker
 	end
 	return Marker
 end
+--[=[
+	Used for processing inbound/outbound functions with multiple arguments
 
+	@param Callbacks MiddlewareCallbacks
+	@param ... ...any
+]=]--
 function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, ...): ...any
 	local Arguments: { any }
 	local Length: number
@@ -38,8 +51,13 @@ function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, ...): ...any
 	end
 	return table.unpack(Arguments, 2, Length)
 end
---- Used for only processing a single argument via middleware for more performance
-function Helpers.ProcessSingleMiddleware(Callbacks: MiddlewareCallbacks, Argument: any): any?
+--[=[
+	Used for only processing a single argument via middleware for more performance
+
+	@param Callbacks MiddlewareCallbacks
+	@param Argument any?
+]=]--
+function Helpers.ProcessSingleMiddleware(Callbacks: MiddlewareCallbacks, Argument: any?): any?
 	for _, Callback: MiddlewareCallback in Callbacks do
 		local Success: boolean, Next: any = Callback(Argument)
 		if not Success then
