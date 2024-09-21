@@ -20,7 +20,7 @@ local EXCEPTION_UNEXPECTED_PROPERTY: string = `TestProperty is not { EXPECTED_PR
 
 local EXPECTED_REMOTE_VALUE: number = 4321
 local EXCEPTION_UNEXPECTED_REMOTE: string = `Output is not { EXPECTED_REMOTE_VALUE }! Got type %s with value %s`
--- Service
+-- Controller
 local Module = Weaver.CreateController{ Name = script.Name }
 Module.Test = Signal.new()
 -- Variables
