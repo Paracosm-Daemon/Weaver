@@ -18,15 +18,20 @@ Weaver.Start{
 				warn("RECEIVED", ...)
 				return true, ...
 			end;
-			Outbound = function(Value: number): (boolean, number)
-				print("OUTBOUND INTERCEPTED:", Value)
-				if Value == 4 then
+			Outbound =
+			{
+				function(Value: number): (boolean, number)
+					print("OUTBOUND INTERCEPTED:", Value)
+					if Value == 4 then
+						return false, Value
+					end
 					return true, Value
-				end
-
-				print(`INSTEAD SENDING { INTERCEPTION_VALUE }`)
-				return false, INTERCEPTION_VALUE
-			end;
+				end;
+				function(Value: number): (boolean, number)
+					print(`SENDING { INTERCEPTION_VALUE } INSTEAD OF { Value }`)
+					return true, INTERCEPTION_VALUE
+				end;
+			};
 		};
 	};
 }
