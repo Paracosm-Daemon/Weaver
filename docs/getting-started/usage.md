@@ -54,7 +54,7 @@ local pongTime: number = os.clock() - pingStart
 warn(pongOutput, "took", pongTime) -- Pong! took 0.31758950000221375
 ```
 
-Just like that, we've created a service to play ping-pong with. Under the hood, Weaver converts your function into a RemoteFunction, though it is handled as if it were a normal function on the client. If you find Weaver's i rnal structure while running your game, you can see how it's built:
+Just like that, we've created a service to play ping-pong with. Under the hood, Weaver converts your function into a RemoteFunction, though it is handled as if it were a normal function on the client. If you find Weaver's internal structure while running your game, you can see how it's built:
 
 ![Ping in the Explorer tree](/usage-ping.png)
 

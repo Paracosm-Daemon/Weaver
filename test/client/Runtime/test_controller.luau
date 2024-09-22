@@ -20,7 +20,7 @@ local EXCEPTION_UNEXPECTED_PROPERTY: string = `TestProperty is not { EXPECTED_PR
 
 local EXPECTED_REMOTE_VALUE: number = 4321
 local EXCEPTION_UNEXPECTED_REMOTE: string = `Output is not { EXPECTED_REMOTE_VALUE }! Got type %s with value %s`
--- Service
+-- Controller
 local Module = Weaver.CreateController{ Name = script.Name }
 Module.Test = Signal.new()
 -- Variables
@@ -106,7 +106,7 @@ function Module:WeaverStart(): ()
 		Tester:Latch(function(FreeBranch): ()
 			assert(TestService.TestProperty:Get() == EXPECTED_PROPERTY_VALUE, EXCEPTION_UNEXPECTED_PROPERTY)
 			Tester:Latch(function(Free): ()
-				TestService.TestSignal:Fire(EXPECTED_REMOTE_VALUE)
+				TestService.TestSignal:Fire(.5 * EXPECTED_REMOTE_VALUE)
 				Free()
 			end, "RemoteSignal Fire")
 			FreeBranch()

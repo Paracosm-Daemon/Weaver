@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class Signal
 
@@ -7,6 +6,7 @@
 
 	This is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances.
 ]=]--
+-- Module
 local Signal: SignalImpl = {} :: SignalImpl
 --[=[
 	@class SignalConnection
@@ -40,25 +40,25 @@ type SignalImpl =
 	]=]--
 	new: () -> Signal;
 	--[=[
-		Fires the signal with the specified data.
+		Fires the Signal with the specified data.
 	]=]--
 	Fire: (self: Signal, ...any) -> ();
 	--[=[
-		Connects `Callback` to this signal, creating a new `SignalConnection`.
+		Connects `Callback` to this Signal, creating a new `SignalConnection`.
 	]=]--
 	Connect: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
-		Connects `Callback` to this signal in parallel, creating a new `SignalConnection`. Useful for Parallel Luau.
+		Connects `Callback` to this Signal in parallel, creating a new `SignalConnection`. Useful for Parallel Luau.
 	]=]--
 	ConnectParallel: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
-		Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+		Connects `Callback` to this Signal, disconnecting it once the Signal has fired once.
 	]=]--
 	Once: (self: Signal, Callback: ConnectionCallback) -> SignalConnection;
 	--[=[
 		Waits for the event to fire before resuming the current thread.
 	]=]--
-	Wait: (self: Signal) -> (...any);
+	Wait: (self: Signal) -> ...any;
 	-- Private
 	_Disconnect: (self: Signal, Index: any) -> ();
 }
@@ -105,7 +105,7 @@ function Signal.new(): Signal
 	}, Signal))
 end
 --[=[
-	Fires the signal with the specified data.
+	Fires the Signal with the specified data.
 
 	@param ... ...any
 ]=]--
@@ -115,7 +115,7 @@ function Signal:Fire(...): ()
 	end
 end
 --[=[
-	Connects `Callback` to this signal, creating a new [SignalConnection].
+	Connects `Callback` to this Signal, creating a new [SignalConnection].
 
 	@param Callback ConnectionCallback -- The function to connect.
 	@return SignalConnection
@@ -124,7 +124,7 @@ function Signal:Connect(Callback: ConnectionCallback): SignalConnection
 	return SignalConnection.new(Callback, self._Connections)
 end
 --[=[
-	Connects `Callback` to this signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.
+	Connects `Callback` to this Signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.
 
 	@param Callback ConnectionCallback -- The function to connect.
 	@return SignalConnection
@@ -136,7 +136,7 @@ function Signal:ConnectParallel(Callback: ConnectionCallback): SignalConnection
 	end)
 end
 --[=[
-	Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+	Connects `Callback` to this Signal, disconnecting it once the Signal has fired once.
 
 	@param Callback ConnectionCallback -- The function to connect.
 	@return SignalConnection
@@ -153,9 +153,9 @@ end
 	Waits for the event to fire before resuming the current thread.
 
 	@yields
-	@return ...any -- All of the data that the signal returned from one event.
+	@return ...any -- All of the data that the Signal returned from one event.
 ]=]--
-function Signal:Wait(): (...any)
+function Signal:Wait(): ...any
 	local Thread: thread = coroutine.running()
 	local Connection: SignalConnection
 
@@ -184,6 +184,7 @@ function SignalConnection:Disconnect(): ()
 	self._Ref[self] = nil
 end
 -- Main
-return table.freeze(Signal) :: {
+table.freeze(Signal)
+return Signal :: {
 	new: () -> Signal;
 }

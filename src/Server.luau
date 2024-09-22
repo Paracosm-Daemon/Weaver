@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class WeaverServer
 	@server
@@ -8,6 +7,7 @@
 
 	All of the logic here is for starting and handling services alongside the communication bridge with the client.
 ]=]--
+-- Module
 local WeaverServer = {}
 -- Modules
 local Module = script.Parent
@@ -22,7 +22,7 @@ local Exceptions = require(Internals.Exceptions)
 local Helpers = require(Internals.Helpers)
 local Paths = require(Internals.Paths)
 -- Types
-type MarkerMethod = (Name: string, Communication: Folder) -> RemoteSignal.RemoteSignal
+type MarkerMethod = (Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal.RemoteSignal
 type WeaverAttributes = { [string]: any }
 --[=[
 	@type WeaverMethod (self: WeaverExposed, Invoker: Player, ...any) -> (...any)
@@ -52,7 +52,9 @@ type WeaverMockService =
 	Attributes: WeaverAttributes;
 	Client: WeaverMockExposed;
 
+	Middleware: Helpers.Middleware?;
 	Name: string;
+
 	[any]: any;
 	-- Methods
 	WeaverStart: (self: WeaverService) -> ()?;
@@ -113,27 +115,37 @@ export type WeaverService =
 	WeaverStart: (self: WeaverService) -> ()?;
 	WeaverInit: (self: WeaverService) -> ()?;
 }
+--[=[
+	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (Continue: boolean, ...any)
+	@within WeaverServer
+]=]--
+--[=[
+	[Middleware](/docs/communication/middleware) used by the server.
+
+	@type WeaverMiddleware WeaverMiddlewareCallback | { WeaverMiddlewareCallback }
+	@within WeaverServer
+]=]--
 -- Constants
 local UNRELIABLE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("UNRELIABLE_SIGNAL_MARKER")
 local REMOTE_SIGNAL_MARKER: Helpers.Marker = Helpers.CreateMarker("REMOTE_SIGNAL_MARKER")
 
 local MARKINGS: { [Helpers.Marker]: MarkerMethod } =
 {
-	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
+	[REMOTE_SIGNAL_MARKER] = function(Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal.RemoteSignal
 		local Signal: RemoteEvent = Instance.new("RemoteEvent")
 
 		Signal.Name = Name
 		Signal.Parent = Communication
 
-		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener)
+		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener, Inbound, Outbound)
 	end;
-	[UNRELIABLE_SIGNAL_MARKER] = function(Name: string, Communication: Folder): RemoteSignal.RemoteSignal
+	[UNRELIABLE_SIGNAL_MARKER] = function(Name: string, Communication: Folder, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal.RemoteSignal
 		local Signal: UnreliableRemoteEvent = Instance.new("UnreliableRemoteEvent")
 
 		Signal.Name = Name
 		Signal.Parent = Communication
 
-		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener)
+		return RemoteSignal.new(Signal :: RemoteSignal.SignalListener, Inbound, Outbound)
 	end;
 }
 -- Variables
@@ -147,9 +159,44 @@ local Running: boolean = false
 local Started: boolean = false
 -- Functions
 -- Private
+local function HookMiddleware(
+	Signal: RemoteFunction,
+	self: WeaverExposed,
+	Callback: (self: WeaverExposed, Client: Player, ...any) -> ...any,
+	Inbound: Helpers.MiddlewareCallbacks?,
+	Outbound: Helpers.MiddlewareCallbacks?
+): ()
+	if Inbound then
+		if Outbound then
+			-- Inbound & Outbound
+			Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+				return Helpers.ProcessMiddleware(Outbound, Invoker, Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...)))
+			end
+			return
+		end
+		-- Inbound
+		Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+			return Callback(self, Invoker, Helpers.ProcessMiddleware(Inbound, Invoker, ...))
+		end
+		return
+	end
+	if Outbound then
+		-- Outbound
+		Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+			return Helpers.ProcessMiddleware(Outbound, Invoker, Callback(self, Invoker, ...))
+		end
+		return
+	end
+	-- None
+	Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
+		return Callback(self, Invoker, ...)
+	end
+end
 -- Public
 --[=[
 	Starts Weaver.
+
+	If any middleware is provided, it will be used as as the default if no services provide their own.
 
 	:::caution
 
@@ -158,10 +205,19 @@ local Started: boolean = false
 	:::
 
 	@yields
+	@param Middleware { Inbound: WeaverMiddleware?, Outbound: WeaverMiddleware? }?
 ]=]--
-function WeaverServer.Start(): ()
+function WeaverServer.Start(Middleware: Helpers.Middleware?): ()
 	assert(not Started, Exceptions.EXCEPTION_HAS_STARTED)
 	assert(Mockups, Exceptions.EXCEPTION_CANT_START)
+
+	local Outbound: Helpers.MiddlewareCallbacks = Helpers.EMPTY_MIDDLEWARE
+	local Inbound: Helpers.MiddlewareCallbacks = Helpers.EMPTY_MIDDLEWARE
+
+	if Middleware then
+		Outbound = Helpers.StripMiddleware(Middleware.Outbound)
+		Inbound = Helpers.StripMiddleware(Middleware.Inbound)
+	end
 
 	Started = true
 	table.freeze(Mockups)
@@ -170,6 +226,18 @@ function WeaverServer.Start(): ()
 	Communication.Name = Paths.ORIGIN
 	-- Initialize the signals before parenting the Communication folder
 	for Name: string, Mockup: WeaverMockService in Mockups do
+		local Service_Outbound: Helpers.MiddlewareCallbacks = Outbound
+		local Service_Inbound: Helpers.MiddlewareCallbacks = Inbound
+
+		local Service_Middleware: Helpers.Middleware? = Mockup.Middleware
+		if Service_Middleware then
+			Service_Outbound = Helpers.StripMiddleware(Service_Middleware.Outbound)
+			Service_Inbound = Helpers.StripMiddleware(Service_Middleware.Inbound)
+		end
+
+		local Has_Outbound: boolean = Service_Outbound[1] ~= nil
+		local Has_Inbound: boolean = Service_Inbound[1] ~= nil
+
 		local Service: WeaverService = Mockup :: WeaverService
 		local Client: WeaverExposed = {} :: WeaverExposed
 
@@ -194,9 +262,13 @@ function WeaverServer.Start(): ()
 			-- Functions are declared as RemoteFunctions in the CLient table
 			if Type == "function" then
 				local Signal: RemoteFunction = Instance.new("RemoteFunction")
-				Signal.OnServerInvoke = function(Invoker: Player, ...): (...any)
-					return Value(Client, Invoker, ...)
-				end
+				HookMiddleware(
+					Signal,
+					Client,
+					Value,
+					if Has_Inbound then Service_Inbound else nil,
+					if Has_Outbound then Service_Outbound else nil
+				)
 
 				Signal.Name = Index
 				Signal.Parent = Signals
@@ -211,7 +283,7 @@ function WeaverServer.Start(): ()
 					continue
 				end
 
-				Client[Index] = Instantiate(tostring(Index), Signals)
+				Client[Index] = Instantiate(tostring(Index), Signals, Service_Inbound, Service_Outbound)
 				continue
 			end
 			-- Assign other types to a RemoteProperty, since they're defined in the Client table
@@ -341,6 +413,21 @@ function WeaverServer.GetService(Name: string): WeaverService
 	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
 end
 --[=[
+	Returns all [WeaverService]s added.
+
+	:::caution
+
+	This will throw an error if Weaver has not started.
+
+	:::
+
+	@return { [string]: WeaverService }
+]=]--
+function WeaverServer.GetServices(): { [string]: WeaverService }
+	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetServices"))
+	return Services
+end
+--[=[
 	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started.
 
 	:::caution
@@ -451,4 +538,6 @@ end
 	@readonly
 ]=]--
 WeaverServer.Util = Util
-return table.freeze(WeaverServer)
+table.freeze(WeaverServer)
+
+return WeaverServer

@@ -1,5 +1,4 @@
 --!strict
--- Module
 --[=[
 	@class RemoteSignal
 
@@ -7,6 +6,7 @@
 
 	This is an interface meant to make using RemoteEvents much easier, with functions identical to [Signal].
 ]=]--
+-- Module
 local RemoteSignal: RemoteSignalImpl = {} :: RemoteSignalImpl
 
 RemoteSignal.__index = RemoteSignal
@@ -17,7 +17,9 @@ end
 local RunService = game:GetService("RunService")
 -- Modules
 local Internals = script.Parent
+
 local Clients = require(Internals.Clients)
+local Helpers = require(Internals.Helpers)
 -- Types
 type RemoteSignalImpl =
 {
@@ -28,7 +30,7 @@ type RemoteSignalImpl =
 	--[=[
 		Constructs a new RemoteSignal object.
 	]=]--
-	new: (Instance: SignalListener) -> RemoteSignal;
+	new: (Instance: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal;
 	--[=[
 		On the client, fires to the server.
 
@@ -52,19 +54,19 @@ type RemoteSignalImpl =
 	]=]--
 	FireFilter: (self: RemoteSignal, Filter: (Client: Player, ...any) -> boolean, ...any) -> ();
 	--[=[
-		Connects `Callback` to this signal.
+		Connects `Callback` to this RemoteSignal.
 
-		Executes when a client fires this signal to the server, or vice versa.
+		Executes when a client fires this RemoteSignal to the server, or vice versa.
 	]=]--
 	Connect: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
-		Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+		Connects `Callback` to this RemoteSignal in parallel. Useful with Parallel Luau.
 
-		Executes when a client fires this signal to the server, or vice versa.
+		Executes when a client fires this RemoteSignal to the server, or vice versa.
 	]=]--
 	ConnectParallel: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
-		Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+		Connects `Callback` to this RemoteSignal, disconnecting it once the RemoteSignal has fired once.
 	]=]--
 	Once: (self: RemoteSignal, Callback: RemoteConnectionCallback) -> RBXScriptConnection;
 	--[=[
@@ -72,11 +74,12 @@ type RemoteSignalImpl =
 	]=]--
 	Wait: (self: RemoteSignal) -> (...any);
 }
+type BaseRemoteConnection = (...any) -> ()
 --[=[
 	@type RemoteConnectionCallback (...any) -> () | (Client: Player, ...any)
 	@within RemoteSignal
 ]=]--
-type RemoteConnectionCallback = (...any) -> () | (Client: Player, ...any) -> ()
+type RemoteConnectionCallback = BaseRemoteConnection | (Client: Player, ...any) -> ()
 --[=[
 	@private
 
@@ -105,10 +108,28 @@ export type RemoteSignal = typeof(setmetatable({} :: {
 
 	_Instance: SignalListener;
 	_Event: RBXScriptSignal;
+
+	_Outbound: Helpers.MiddlewareCallbacks;
+	_Inbound: Helpers.MiddlewareCallbacks;
+
+	_Has_Outbound: boolean;
+	_Has_Inbound: boolean;
 }, {} :: RemoteSignalImpl))
 -- Constants
 local IS_SERVER: boolean = RunService:IsServer()
 -- Functions
+-- Private
+local ProcessInbound: (Inbounds: Helpers.MiddlewareCallbacks, ...any) -> ...any
+if IS_SERVER then
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, Client: Player, ...): (Player, ...any)
+		return Client, Helpers.ProcessMiddleware(Inbounds, Client, ...)
+	end
+else
+	ProcessInbound = function(Inbounds: Helpers.MiddlewareCallbacks, ...): ...any
+		return Helpers.ProcessMiddleware(Inbounds, ...)
+	end
+end
+-- Public
 --[=[
 	Constructs a new RemoteSignal object.
 
@@ -117,9 +138,15 @@ local IS_SERVER: boolean = RunService:IsServer()
 
 	@return RemoteSignal
 ]=]--
-function RemoteSignal.new(From: SignalListener): RemoteSignal
+function RemoteSignal.new(From: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks): RemoteSignal
 	return table.freeze(setmetatable({
 		Unreliable = From:IsA("UnreliableRemoteEvent");
+		-- Fast way of checking since it's guaranteed to be an ordered array
+		_Has_Outbound = Outbound[1] ~= nil;
+		_Has_Inbound = Inbound[1] ~= nil;
+
+		_Outbound = Outbound;
+		_Inbound = Inbound;
 
 		_Instance = From;
 		_Event = if IS_SERVER then From.OnServerEvent else From.OnClientEvent;
@@ -140,7 +167,11 @@ if IS_SERVER then
 	]=]--
 	function RemoteSignal:Fire(Client: Player, ...): ()
 		assert((typeof(Client) == "Instance") and Client:IsA("Player"), "The first argument of FireClient on the server must be a player, got %s")
-		self._Instance:FireClient(Client, ...)
+		if not self._Has_Outbound then
+			self._Instance:FireClient(Client, ...)
+			return
+		end
+		self._Instance:FireClient(Client, Helpers.ProcessMiddleware(self._Outbound, Client, ...))
 	end
 	--[=[
 		Fires to all clients in the game.
@@ -149,7 +180,13 @@ if IS_SERVER then
 		@param ... ...any
 	]=]--
 	function RemoteSignal:FireAll(...): ()
-		self._Instance:FireAllClients(...)
+		if not self._Has_Outbound then
+			self._Instance:FireAllClients(...)
+			return
+		end
+		for _, Client: Player in Clients.Array do
+			self._Instance:FireClient(Client, Helpers.ProcessMiddleware(self._Outbound, Client, ...))
+		end
 	end
 	--[=[
 		Fires to all clients specified in `For`.
@@ -202,50 +239,73 @@ else
 		@param ... ...any -- The arguments to send over this RemoteSignal.
 	]=]--
 	function RemoteSignal:Fire(...): ()
-		self._Instance:FireServer(...)
+		if not self._Has_Outbound then
+			self._Instance:FireServer(...)
+			return
+		end
+		self._Instance:FireServer(Helpers.ProcessMiddleware(self._Outbound, ...))
 	end
 end
 --[=[
-	Connects `Callback` to this signal.
+	Connects `Callback` to this RemoteSignal.
 
-	Executes when a client fires this signal to the server, or vice versa.
+	Executes when a client fires this RemoteSignal to the server, or vice versa.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:Connect(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:Connect(Callback)
+	if not self._Has_Inbound then
+		return self._Event:Connect(Callback)
+	end
+	return self._Event:Connect(function(...): ()
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
+	end)
 end
 --[=[
-	Connects `Callback` to this signal in parallel. Useful with Parallel Luau.
+	Connects `Callback` to this RemoteSignal in parallel. Useful with Parallel Luau.
 
-	Executes when a client fires this signal to the server, or vice versa.
+	Executes when a client fires this RemoteSignal to the server, or vice versa.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:ConnectParallel(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:ConnectParallel(Callback)
+	if not self._Has_Inbound then
+		return self._Event:ConnectParallel(Callback)
+	end
+	return self._Event:ConnectParallel(function(...): ()
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
+	end)
 end
 --[=[
-	Connects `Callback` to this signal, disconnecting it once the signal has fired once.
+	Connects `Callback` to this RemoteSignal, disconnecting it once the RemoteSignal has fired once.
 
 	@param Callback RemoteConnectionCallback -- The function to connect.
 	@return RBXScriptConnection
 ]=]--
 function RemoteSignal:Once(Callback: RemoteConnectionCallback): RBXScriptConnection
-	return self._Event:Once(Callback)
+	if not self._Has_Inbound then
+		return self._Event:Once(Callback)
+	end
+	return self._Event:Once(function(...): ()
+		(Callback :: BaseRemoteConnection)(ProcessInbound(self._Inbound, ...))
+	end)
 end
 --[=[
 	Waits for the event to fire before resuming the current thread.
 
 	@yields
-	@return ...any -- All of the data that the signal returned from one event.
+	@return ...any -- All of the data that the RemoteSignal returned from one event.
 ]=]--
-function RemoteSignal:Wait(): (...any)
-	return self._Event:Wait()
+function RemoteSignal:Wait(): ...any
+	if not self._Has_Inbound then
+		return self._Event:Wait()
+	end
+	return ProcessInbound(self._Inbound, self._Event:Wait())
 end
 -- Main
-return table.freeze(RemoteSignal) :: {
-	new: (Instance: SignalListener) -> RemoteSignal;
+table.freeze(RemoteSignal)
+return RemoteSignal :: {
+	new: (Instance: SignalListener, Inbound: Helpers.MiddlewareCallbacks, Outbound: Helpers.MiddlewareCallbacks) -> RemoteSignal;
 }

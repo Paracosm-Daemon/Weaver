@@ -110,7 +110,7 @@ local MoneyService = Weaver.CreateService{ Name = "MoneyService" }
 MoneyService.Client.Money = 0
 MoneyService.Client.AddMoney = Weaver.CreateRemoteSignal()
 
-local Money -- This gets initialized in WeaverInit, so it can be used as a shorthand
+local Money: RemoteProperty -- This gets initialized in WeaverInit, so it can be used as a shorthand
 -- This is in the server table, so this won't clash with the signal's name
 function MoneyService:AddMoney(Client: Player, Amount: number): ()
 	Money:SetFor(Client, Money:GetFor(Client) + Amount)

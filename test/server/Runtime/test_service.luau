@@ -12,6 +12,8 @@ local EXCEPTION_UNEXPECTED_ATTRIBUTE: string = `{ EXPECTED_ATTRIBUTE_NAME } is n
 local EXCEPTION_PARAM_ERROR: string = "Param %d of %s is not %s! Got type %s with value %s"
 
 local EXCEPTION_UNEXPECTED_PROPERTY: string = "TestProperty value for %s is not %s! Got type %s with value %s"
+
+local EXPECTED_SIGNAL_VALUE: number = 4321
 local DEFAULT_PROPERTY_VALUE: number = 0
 -- Service
 local Module = Weaver.CreateService{ Name = script.Name }
@@ -22,6 +24,17 @@ Module.Client.TestSignal = Weaver.CreateRemoteSignal()
 Module.Client.TestProperty = DEFAULT_PROPERTY_VALUE
 
 Module.Attributes.TestAttribute = "foo"
+Module.Middleware =
+{
+	Inbound = function(Client: Player, ...): (boolean, ...any)
+		print(`Sent by { Client }:`, ...)
+		return true, ...
+	end;
+	Outbound = function(Client: Player, ...): (boolean, ...any)
+		print("SERVER OUTBOUND:", Client, ...)
+		return true, ...
+	end;
+}
 -- Functions
 -- Client
 function Module.Client:Frobulate(Client: Player, Frobulations: number): number
@@ -39,6 +52,16 @@ end
 
 function Module:WeaverInit(): ()
 	Tester:Latch(function(Free): ()
+		self.Client.TestProperty.Changed:Once(function(For: Player?, Value: any): ()
+			local Type: string = typeof(For)
+
+			assert(For and (Type == "Instance") and For:IsA("Player"), string.format(EXCEPTION_PARAM_ERROR, 2, "TestProperty", "Player", Type, tostring(For)))
+			assert(Value == nil, string.format(EXCEPTION_PARAM_ERROR, 2, "TestProperty", "null", typeof(Value), tostring(Value)))
+
+			Free()
+		end)
+	end, "TestProperty Changed")
+	Tester:Latch(function(Free): ()
 		local Value: any? = self:GetAttribute(EXPECTED_ATTRIBUTE_NAME)
 		assert(Value == EXPECTED_ATTRIBUTE_VALUE, string.format(EXCEPTION_UNEXPECTED_ATTRIBUTE, typeof(Value), tostring(Value)))
 
@@ -49,9 +72,9 @@ function Module:WeaverInit(): ()
 			assert(Client:IsA("Player"), string.format(EXCEPTION_PARAM_ERROR, 1, "TestSignal", "Player", typeof(Client), tostring(Client)))
 
 			local Type: string = typeof(Input)
-			assert(Type == "number", string.format(EXCEPTION_PARAM_ERROR, 2, "TestSignal", "number", Type, tostring(Input)))
+			assert((Type == "number") and (Input == EXPECTED_SIGNAL_VALUE), string.format(EXCEPTION_PARAM_ERROR, 2, "TestSignal", `number with value { EXPECTED_SIGNAL_VALUE }`, Type, tostring(Input)))
 
-			self.Client.TestSignal:Fire(Client, 4321)
+			self.Client.TestSignal:Fire(Client, EXPECTED_SIGNAL_VALUE)
 			Free()
 		end)
 	end, "RemoteSignal Connect")
