@@ -158,10 +158,10 @@ Weaver.Start{
 						-- Then, we write our number
 						buffer.writei16(
 							packet,
-							argument,
 							-- Buffers start at 0, so subtract 1 from index,
 							-- then account for the 16-bit integer size in bytes
-							2 * (index - 1)
+							2 * (index - 1),
+							argument
 						)
 					end
 					return true, packet

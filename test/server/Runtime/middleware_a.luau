@@ -1,6 +1,7 @@
 --!strict
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 -- Modules
 local Weaver = require(ReplicatedStorage.Weaver)
 -- Service
@@ -49,6 +50,9 @@ local NetworkService = Weaver.CreateService{
 }
 
 function NetworkService:WeaverInit(): ()
+	Players.PlayerRemoving:Connect(function(Client: Player): ()
+		senders[Client] = nil
+	end)
 	-- Our packet is guaranteed to either be a buffer or nil, due to our inbound middleware
 	self.Client.Receiver:Connect(function(client: Player, packet: buffer?): ()
 		-- First, check if it's null
