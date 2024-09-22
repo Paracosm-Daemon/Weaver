@@ -84,3 +84,21 @@ Service.Client.RemoteProperty = Weaver.CreateEmptyProperty()
 ```
 
 Generally, the API for [RemoteProperties](/api/RemoteProperty) is not too different outside of the [`RemoteProperty.Changed`](/api/RemoteProperty#Changed) signal. Do note that [`RemoteProperty:SetTop()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#SetTop), [`RemoteProperty:SetForList()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#SetForList), and [`RemoteProperty:ClearForList()`](https://sleitnick.github.io/RbxUtil/api/RemoteProperty#ClearForList) have been renamed to [`RemoteProperty:SetDefault()`](/api/RemoteProperty#SetDefault), [`RemoteProperty:SetForEach()`](/api/RemoteProperty#SetForEach), and [`RemoteProperty:ClearForEach()`](/api/RemoteProperty#ClearForEach) respectively. Extra quality-of-life methods have also been added, which you can see in Weaver's [RemoteProperty API reference](/api/RemoteProperty).
+
+[Middleware](/docs/communication/middleware) has slightly different naming compared to Knit, with [PerServiceMiddleware](https://sleitnick.github.io/Knit/api/KnitClient#PerServiceMiddleware) being renamed to Services within the [`WeaverClient.Start()`](/api/WeaverClient#Start) middleware table. Server middleware also does not receive its arguments as a table, though this behavior is easily replicable:
+
+```lua
+WeaverServer.Start{
+	Middleware = {
+		Inbound = function(client: Player, ...): (boolean, ...any)
+			local length: number = select("#", ...)
+			-- Here you can also use table.pack(),
+			-- though note that it adds "n" which makes the above length variable unnecessary
+			local arguments: { any } = { ... }
+			return true, table.unpack(arguments, 1, length)
+		end;
+	};
+}
+```
+
+Weaver also does not pass through the `Continue` boolean. This is done to keep the backend consistent, though you can add your own return value to specify if all of your inbound/outbound functions have passed.
