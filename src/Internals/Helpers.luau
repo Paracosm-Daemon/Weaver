@@ -7,6 +7,8 @@
 
 	Weaver's general utility module to bridge boilerplate between the server and client.
 ]=]--
+-- Services
+local RunService = game:GetService("RunService")
 -- Modules
 local Internals = script.Parent
 local Exceptions = require(Internals.Exceptions)
@@ -16,6 +18,16 @@ local Helpers =
 	EMPTY_MIDDLEWARE = table.freeze{};
 	NONE = newproxy(false);
 }
+-- Types
+export type MiddlewareCallback = (...any) -> boolean
+export type MiddlewareCallbacks = { MiddlewareCallback }
+
+export type Middleware = { Inbound: (MiddlewareCallback | MiddlewareCallbacks)?, Outbound: (MiddlewareCallback | MiddlewareCallbacks)? }
+
+export type Marker = typeof(newproxy(false))
+export type None = typeof(Helpers.NONE)
+-- Constants
+local IS_SERVER: boolean = RunService:IsServer()
 -- Functions
 --[=[
 	Creates a marker with the specified `Name`
@@ -29,34 +41,69 @@ function Helpers.CreateMarker(Name: string): Marker
 	end
 	return Marker
 end
---[=[
-	Used for processing inbound/outbound functions with multiple arguments
+if IS_SERVER then
+	--[=[
+		Used for processing inbound/outbound functions with multiple arguments
 
-	@yields
+		@server
+		@yields
 
-	@param Callbacks MiddlewareCallbacks
-	@param ... ...any
-]=]--
-function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, ...): ...any
-	local Arguments: { any }
-	local Length: number
+		@param Callbacks MiddlewareCallbacks
+		@param Client Player
+		@param ... ...any
+	]=]--
+	function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, Client: Player, ...): ...any
+		local Arguments: { any }
+		local Length: number
 
-	for _, Callback: MiddlewareCallback in Callbacks do
-		Arguments =
-			if Arguments then
-				-- Simplest way of unpacking the arguments efficiently
-				{ Callback(table.unpack(Arguments, 2, Length)) }
-			else
-				{ Callback(...) }
-		Length = #Arguments
-		if Arguments[1] ~= true then
-			return table.unpack(Arguments, 2, Length)
+		for _, Callback: MiddlewareCallback in Callbacks do
+			Arguments =
+				if Arguments then
+					-- Simplest way of unpacking the arguments efficiently
+					{ Callback(Client, table.unpack(Arguments, 2, Length)) }
+				else
+					{ Callback(Client, ...) }
+			Length = #Arguments
+			if Arguments[1] ~= true then
+				return table.unpack(Arguments, 2, Length)
+			end
 		end
+		if Length == 1 then
+			return nil
+		end
+		return table.unpack(Arguments, 2, Length)
 	end
-	if Length == 1 then
-		return nil
+else
+	--[=[
+		Used for processing inbound/outbound functions with multiple arguments
+
+		@client
+		@yields
+
+		@param Callbacks MiddlewareCallbacks
+		@param ... ...any
+	]=]--
+	function Helpers.ProcessMiddleware(Callbacks: MiddlewareCallbacks, ...): ...any
+		local Arguments: { any }
+		local Length: number
+
+		for _, Callback: MiddlewareCallback in Callbacks do
+			Arguments =
+				if Arguments then
+					-- Simplest way of unpacking the arguments efficiently
+					{ Callback(table.unpack(Arguments, 2, Length)) }
+				else
+					{ Callback(...) }
+			Length = #Arguments
+			if Arguments[1] ~= true then
+				return table.unpack(Arguments, 2, Length)
+			end
+		end
+		if Length == 1 then
+			return nil
+		end
+		return table.unpack(Arguments, 2, Length)
 	end
-	return table.unpack(Arguments, 2, Length)
 end
 --[=[
 	Used for only processing a single argument via middleware for more performance
@@ -107,14 +154,6 @@ function Helpers.StripMiddleware(Methods: (MiddlewareCallback | MiddlewareCallba
 	table.freeze(Stripped)
 	return Stripped
 end
--- Types
-export type MiddlewareCallback = (...any) -> boolean
-export type MiddlewareCallbacks = { MiddlewareCallback }
-
-export type Middleware = { Inbound: (MiddlewareCallback | MiddlewareCallbacks)?, Outbound: (MiddlewareCallback | MiddlewareCallbacks)? }
-
-export type Marker = typeof(newproxy(false))
-export type None = typeof(Helpers.NONE)
 -- Main
 table.freeze(Helpers)
 return Helpers
