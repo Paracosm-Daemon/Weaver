@@ -67,7 +67,7 @@ local NetworkService = Weaver.CreateService{
 	Client =
 	{
 		-- This will be a receiver for our middleware
-		Receiver = Weaver.CreateSignal();
+		Receiver = Weaver.CreateRemoteSignal();
 	};
 	-- Middleware can also be specified outside of CreateService.
 	-- This allows for use of the service table in your inbound functions
@@ -164,7 +164,7 @@ Weaver.Start{
 							2 * (index - 1)
 						)
 					end
-					return true, ...
+					return true, packet
 				end;
 			};
 		};
