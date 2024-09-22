@@ -8,8 +8,8 @@
 This is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances."><meta data-rh="true" property="og:description" content="Weaver&#x27;s built-in implementation for signals.
 
 This is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances."><link data-rh="true" rel="icon" href="/Weaver/favicon.png"><link data-rh="true" rel="canonical" href="https://paracosm-daemon.github.io/Weaver/api/Signal"><link data-rh="true" rel="alternate" href="https://paracosm-daemon.github.io/Weaver/api/Signal" hreflang="en"><link data-rh="true" rel="alternate" href="https://paracosm-daemon.github.io/Weaver/api/Signal" hreflang="x-default"><link rel="stylesheet" href="/Weaver/assets/css/styles.e1adec2f.css">
-<link rel="preload" href="/Weaver/assets/js/runtime~main.4f9ae412.js" as="script">
-<link rel="preload" href="/Weaver/assets/js/main.5f8bc53c.js" as="script">
+<link rel="preload" href="/Weaver/assets/js/runtime~main.50f2d61e.js" as="script">
+<link rel="preload" href="/Weaver/assets/js/main.6c95c1c5.js" as="script">
 </head>
 <body class="navigation-with-keyboard">
 <script>!function(){function e(e){document.documentElement.setAttribute("data-theme",e)}var t=function(){var e=null;try{e=localStorage.getItem("theme")}catch(e){}return e}();null!==t?e(t):window.matchMedia("(prefers-color-scheme: dark)").matches?e("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,e("light"))}()</script><div id="__docusaurus">
@@ -19,21 +19,21 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
 </div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="types">Types<a href="#types" class="hash-link" aria-label="Direct link to Types" title="Direct link to Types">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="ConnectionCallback"><code style="text-decoration:none">ConnectionCallback</code><a href="#ConnectionCallback" class="hash-link" aria-label="Direct link to ConnectionCallback" title="Direct link to ConnectionCallback">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L80"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code class="purple_ieR2">type</code> <code>ConnectionCallback<!-- --> = </code> <code class="purple_ieR2">(</code><code class="blue_P4bS">...any</code><code class="purple_ieR2">)</code><code class="purple_ieR2"> → </code><code class="purple_ieR2">(</code><code class="purple_ieR2">)</code></div><div></div><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="new"><code style="text-decoration:none">new</code><a href="#new" class="hash-link" aria-label="Direct link to new" title="Direct link to new">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L102"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->.</code><code class="green_DgR4">new</code><code>(</code><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/Signal">Signal</a></code></div><div>
 <p>Constructs a new Signal object.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Fire"><code style="text-decoration:none">Fire</code><a href="#Fire" class="hash-link" aria-label="Direct link to Fire" title="Direct link to Fire">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L112"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->:</code><code class="green_DgR4">Fire</code><code>(</code><code>...<!-- -->: </code><code class="blue_P4bS">...any</code><code>) → </code><code>(</code><code>)</code></div><div>
-<p>Fires the signal with the specified data.</p>
+<p>Fires the Signal with the specified data.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Connect"><code style="text-decoration:none">Connect</code><a href="#Connect" class="hash-link" aria-label="Direct link to Connect" title="Direct link to Connect">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L123"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->:</code><code class="green_DgR4">Connect</code><code>(</code><div class="inset_uKQm"><div><code>Callback<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/Signal#ConnectionCallback">ConnectionCallback</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>The function to connect.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/SignalConnection">SignalConnection</a></code></div><div>
-<p>Connects <code>Callback</code> to this signal, creating a new <a href="/Weaver/api/SignalConnection">SignalConnection</a>.</p>
+<p>Connects <code>Callback</code> to this Signal, creating a new <a href="/Weaver/api/SignalConnection">SignalConnection</a>.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="ConnectParallel"><code style="text-decoration:none">ConnectParallel</code><a href="#ConnectParallel" class="hash-link" aria-label="Direct link to ConnectParallel" title="Direct link to ConnectParallel">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L132"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->:</code><code class="green_DgR4">ConnectParallel</code><code>(</code><div class="inset_uKQm"><div><code>Callback<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/Signal#ConnectionCallback">ConnectionCallback</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>The function to connect.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/SignalConnection">SignalConnection</a></code></div><div>
-<p>Connects <code>Callback</code> to this signal in parallel, creating a new <a href="/Weaver/api/SignalConnection">SignalConnection</a>. Useful for Parallel Luau.</p>
+<p>Connects <code>Callback</code> to this Signal in parallel, creating a new <a href="/Weaver/api/SignalConnection">SignalConnection</a>. Useful for Parallel Luau.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Once"><code style="text-decoration:none">Once</code><a href="#Once" class="hash-link" aria-label="Direct link to Once" title="Direct link to Once">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L144"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->:</code><code class="green_DgR4">Once</code><code>(</code><div class="inset_uKQm"><div><code>Callback<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/Signal#ConnectionCallback">ConnectionCallback</a></code><span class="inlineDescription_G7Er">-- <span>
 <p>The function to connect.</p>
 </span></span></div></div><code>) → </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="/Weaver/api/SignalConnection">SignalConnection</a></code></div><div>
-<p>Connects <code>Callback</code> to this signal, disconnecting it once the signal has fired once.</p>
+<p>Connects <code>Callback</code> to this Signal, disconnecting it once the Signal has fired once.</p>
 </div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Wait"><code style="text-decoration:none">Wait</code><a href="#Wait" class="hash-link" aria-label="Direct link to Wait" title="Direct link to Wait">​</a></h3><span class="badge_Ba2I" style="color:#f1c40f"><span class="badgeTooltip_cWXP">This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts.</span><span class="badgeToolTipTail_H9D_"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#f1c40f" role="img" aria-label="This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts."><path d="M96.4 11.9c-1.4-2.5-4-4-6.9-4H10.8c-2.9 0-5.4 1.5-6.9 4-1.4 2.5-1.4 5.5 0 7.9L43.3 88c1.4 2.5 4 4 6.9 4 2.9 0 5.4-1.5 6.9-4l39.3-68.2c1.4-2.4 1.4-5.4 0-7.9zM46.3 54.5c1.1-1.1 2.3-1.6 3.8-1.6s2.8.5 3.8 1.6c1.1 1.1 1.6 2.3 1.6 3.8s-.5 2.8-1.6 3.8c-1.1 1.1-2.3 1.6-3.8 1.6s-2.8-.5-3.8-1.6c-1.1-1.1-1.6-2.3-1.6-3.8.1-1.5.6-2.8 1.6-3.8zm-.5-4.9V21.8h8.8v27.8h-8.8z"></path></svg> <!-- -->Yields</span></span><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/paracosm-daemon/weaver/blob/main/src/Util/Signal.luau#L158"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>Signal<!-- -->:</code><code class="green_DgR4">Wait</code><code>(</code><code>) → </code><code class="blue_P4bS">...any</code><span class="inlineDescription_G7Er">-- <span>
-<p>All of the data that the signal returned from one event.</p>
+<p>All of the data that the Signal returned from one event.</p>
 </span></span></div><div>
 <p>Waits for the event to fire before resuming the current thread.</p>
 </div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
@@ -56,7 +56,7 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
         },
         {
             &quot;name&quot;: &quot;Fire&quot;,
-            &quot;desc&quot;: &quot;Fires the signal with the specified data.&quot;,
+            &quot;desc&quot;: &quot;Fires the Signal with the specified data.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;...&quot;,
@@ -73,7 +73,7 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
         },
         {
             &quot;name&quot;: &quot;Connect&quot;,
-            &quot;desc&quot;: &quot;Connects `Callback` to this signal, creating a new [SignalConnection].&quot;,
+            &quot;desc&quot;: &quot;Connects `Callback` to this Signal, creating a new [SignalConnection].&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;Callback&quot;,
@@ -95,7 +95,7 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
         },
         {
             &quot;name&quot;: &quot;ConnectParallel&quot;,
-            &quot;desc&quot;: &quot;Connects `Callback` to this signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.&quot;,
+            &quot;desc&quot;: &quot;Connects `Callback` to this Signal in parallel, creating a new [SignalConnection]. Useful for Parallel Luau.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;Callback&quot;,
@@ -117,7 +117,7 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
         },
         {
             &quot;name&quot;: &quot;Once&quot;,
-            &quot;desc&quot;: &quot;Connects `Callback` to this signal, disconnecting it once the signal has fired once.&quot;,
+            &quot;desc&quot;: &quot;Connects `Callback` to this Signal, disconnecting it once the Signal has fired once.&quot;,
             &quot;params&quot;: [
                 {
                     &quot;name&quot;: &quot;Callback&quot;,
@@ -143,7 +143,7 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
             &quot;params&quot;: [],
             &quot;returns&quot;: [
                 {
-                    &quot;desc&quot;: &quot;All of the data that the signal returned from one event.&quot;,
+                    &quot;desc&quot;: &quot;All of the data that the Signal returned from one event.&quot;,
                     &quot;lua_type&quot;: &quot;...any&quot;
                 }
             ],
@@ -170,11 +170,11 @@ This is meant to replace [BindableEvents](https://create.roblox.com/docs/referen
     &quot;name&quot;: &quot;Signal&quot;,
     &quot;desc&quot;: &quot;Weaver&#x27;s built-in implementation for signals.\n\nThis is meant to replace [BindableEvents](https://create.roblox.com/docs/reference/engine/classes/BindableEvent) with simple and fast logic, omitting the need of Instances.&quot;,
     &quot;source&quot;: {
-        &quot;line&quot;: 10,
+        &quot;line&quot;: 9,
         &quot;path&quot;: &quot;src/Util/Signal.luau&quot;
     }
 }</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a><ul><li><a href="#ConnectionCallback" class="table-of-contents__link toc-highlight">ConnectionCallback</a></li></ul></li><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#Connect" class="table-of-contents__link toc-highlight">:Connect</a></li><li><a href="#ConnectParallel" class="table-of-contents__link toc-highlight">:ConnectParallel</a></li><li><a href="#Fire" class="table-of-contents__link toc-highlight">:Fire</a></li><li><a href="#Once" class="table-of-contents__link toc-highlight">:Once</a></li><li><a href="#Wait" class="table-of-contents__link toc-highlight">:Wait</a></li><li><a href="#new" class="table-of-contents__link toc-highlight">.new</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2024 Oliver S. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
-<script src="/Weaver/assets/js/runtime~main.4f9ae412.js"></script>
-<script src="/Weaver/assets/js/main.5f8bc53c.js"></script>
+<script src="/Weaver/assets/js/runtime~main.50f2d61e.js"></script>
+<script src="/Weaver/assets/js/main.6c95c1c5.js"></script>
 </body>
 </html>
