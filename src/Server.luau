@@ -116,7 +116,7 @@ export type WeaverService =
 	WeaverInit: (self: WeaverService) -> ()?;
 }
 --[=[
-	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (boolean, ...any)
+	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (Continue: boolean, ...any)
 	@within WeaverServer
 ]=]--
 --[=[
@@ -411,6 +411,21 @@ function WeaverServer.GetService(Name: string): WeaverService
 	assert(Type == "string", string.format(Exceptions.EXCEPTION_MUST_BE_TYPE, "Service", "string", Type))
 
 	return assert(Services[Name], string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Service", Name))
+end
+--[=[
+	Returns all [WeaverService]s added.
+
+	:::caution
+
+	This will throw an error if Weaver has not started.
+
+	:::
+
+	@return { [string]: WeaverService }
+]=]--
+function WeaverServer.GetServices(): { [string]: WeaverService }
+	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetServices"))
+	return Services
 end
 --[=[
 	Creates and adds a [WeaverService](WeaverServer#WeaverService) before Weaver has started.

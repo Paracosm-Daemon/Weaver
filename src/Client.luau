@@ -78,7 +78,7 @@ export type WeaverController =
 	WeaverInit: (self: WeaverController) -> ()?;
 }
 --[=[
-	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (boolean, ...any)
+	@type WeaverMiddlewareCallback (Client: Player, ...any) -> (Continue: boolean, ...any)
 	@within WeaverClient
 ]=]--
 --[=[
@@ -400,6 +400,21 @@ function WeaverClient.GetController(Name: string): WeaverController
 
 	local Controller: WeaverController? = Controllers[Name]
 	return assert(Controller, string.format(Exceptions.EXCEPTION_DOES_NOT_EXIST, "Controller", Name))
+end
+--[=[
+	Returns all [WeaverController]s added.
+
+	:::caution
+
+	This will throw an error if Weaver has not started.
+
+	:::
+
+	@return { [string]: WeaverController }
+]=]--
+function WeaverClient.GetControllers(): { [string]: WeaverController }
+	assert(Started, string.format(Exceptions.EXCEPTION_NEED_USE_START, "GetControllers"))
+	return Controllers
 end
 --[=[
 	Creates and adds a [WeaverController] before Weaver has started.
